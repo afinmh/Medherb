@@ -1,0 +1,172 @@
+/* /css/navbar.css */
+
+/* 1. [UBAH] Palet Warna Baru - Terinspirasi dari Alam (Sage, Stone, Wood) */
+:root {
+    --bg-navbar: #F5F5F4; /* Warna batu/putih gading yang hangat */
+    --text-dark: #374151; /* Abu-abu gelap yang lebih hangat */
+    --text-light: #f9fafb; /* Putih pudar (tetap bagus di atas gambar) */
+    --accent: #5A7D7C;     /* Aksen warna Sage Green yang tenang dan premium */
+    --shadow: rgba(0, 0, 0, 0.07); /* Bayangan yang lebih lembut */
+}
+
+/* 2. Style Dasar Navbar (Ramping & Elegan) */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 7%;
+    background-color: transparent;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+     z-index: 9999;
+    transition: all 0.3s ease-in-out;
+}
+
+/* 3. [UBAH] Efek saat di-scroll dengan warna baru */
+.navbar.scrolled {
+    background-color: var(--bg-navbar); /* Latar belakang putih gading */
+    box-shadow: 0 4px 12px var(--shadow); /* Bayangan lebih halus */
+    /* Efek blur tetap dipertahankan untuk sentuhan modern */
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+}
+
+/* 4. Logo yang Disesuaikan */
+.navbar .navbar-logo {
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--text-light);
+    text-decoration: none;
+    transition: color 0.3s ease;
+}
+.navbar.scrolled .navbar-logo {
+    color: var(--text-dark);
+}
+.navbar .navbar-logo span {
+    color: var(--accent); /* Titik dengan warna aksen Sage Green */
+}
+
+/* 5. [UBAH] Navigasi Link dengan Interaksi Baru */
+.navbar .navbar-nav a {
+    color: var(--text-light);
+    display: inline-block;
+    font-size: 1rem;
+    font-weight: 600; /* Sedikit lebih tebal agar lebih jelas */
+    margin: 0 1.2rem;
+    text-decoration: none;
+    transition: color 0.3s ease, transform 0.3s ease; /* Transisi untuk transform */
+}
+.navbar.scrolled .navbar-nav a {
+    color: var(--text-dark);
+}
+.navbar .navbar-nav a:hover {
+    color: var(--accent);
+    transform: translateY(-2px); /* Efek sedikit terangkat saat hover */
+}
+.navbar .navbar-nav a::after {
+    display: none;
+}
+
+/* 6. Ikon Hamburger Menu */
+.navbar .navbar-extra a {
+    color: var(--text-light);
+    transition: color 0.3s ease;
+}
+.navbar.scrolled .navbar-extra a {
+    color: var(--text-dark);
+}
+#hamburger-menu {
+    display: none;
+}
+
+/* --- Media Queries (Responsif) --- */
+
+@media (max-width: 768px) {
+    .navbar .navbar-extra .cta-button {
+        display: none;
+    }
+
+    #hamburger-menu {
+        display: inline-block;
+    }
+    .navbar .navbar-nav {
+        position: absolute;
+        top: 100%;
+        right: -100%;
+        background-color: #ffffff;
+        /* [UBAH] Bayangan lebih lembut dan rata */
+        box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+        /* [UBAH] Radius di kedua sisi bawah */
+        border-radius: 0 0 10px 10px;
+        width: 18rem;
+        height: auto;
+        padding-bottom: 1rem;
+        transition: right 0.3s ease-in-out;
+    }
+    .navbar .navbar-nav.active {
+        right: 0;
+    }
+    .navbar .navbar-nav a {
+        color: var(--text-dark);
+        display: block;
+        margin: 1.2rem;
+        padding: 0.5rem;
+        font-size: 1.1rem;
+    }
+    .navbar .navbar-nav a:hover {
+        transform: none; /* Nonaktifkan efek angkat di mobile */
+    }
+}
+
+.navbar .navbar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem; /* Jarak antara ikon dan teks */
+}
+
+.logo-icon {
+    height: 2rem; /* Sesuaikan ukuran ikon logo */
+    transition: filter 0.3s ease;
+}
+
+/* Saat navbar di-scroll, logo yang terang bisa dibuat sedikit lebih gelap agar kontras */
+.navbar.scrolled .logo-icon {
+    /* Opsional: Jika logo Anda berwarna terang dan sulit terlihat di background terang */
+    /* filter: brightness(0.9); */
+}
+
+.navbar .navbar-extra .cta-button {
+    display: inline-flex;       /* Menggunakan flexbox untuk centering */
+    align-items: center;        /* Membuat teks simetris vertikal */
+    justify-content: center;    /* Membuat teks simetris horizontal */
+    
+    color: var(--text-light);
+    background-color: transparent;
+    border: 2px solid var(--accent);
+    
+    padding: 0.6rem 1.5rem;    /* Padding atas/bawah & kiri/kanan disesuaikan */
+    
+    border-radius: 2rem;
+    text-decoration: none;
+    font-weight: 600;
+    margin-right: 1rem;
+    transition: all 0.3s ease;
+}
+
+/* Efek hover pada tombol login */
+.navbar .navbar-extra .cta-button:hover {
+    background-color: var(--accent);
+    color: white;
+}
+
+/* Style tombol login saat navbar di-scroll */
+.navbar.scrolled .navbar-extra .cta-button {
+    color: var(--text-dark);
+    border-color: var(--accent);
+}
+.navbar.scrolled .navbar-extra .cta-button:hover {
+    background-color: var(--accent);
+    color: white;
+}

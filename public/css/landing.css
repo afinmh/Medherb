@@ -1,0 +1,63 @@
+body, html {
+  height: 100%; /* Menggunakan 100% lebih konsisten untuk body/html */
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', 'Arial', sans-serif;
+  background: #f4f7f6;
+}
+
+.landing-page {
+  height: 100vh; /* Mengganti min-height menjadi height agar pas 100vh */
+  background: url('../images/herbal-bg.jpg') center center/cover no-repeat;
+  display: flex;
+  align-items: center; /* Menjaga konten tetap di tengah secara vertikal */
+  justify-content: flex-start; /* Menggeser konten ke kiri */
+  color: #fff;
+  text-shadow: 0 2px 8px rgba(0,0,0,0.3);
+  position: relative;
+}
+
+.landing-page::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 60%; /* Lebar gradien overlay di kiri */
+  height: 100%;
+  background: linear-gradient(90deg, rgba(34,49,63,0.8) 70%, rgba(34,49,63,0) 100%);
+  z-index: 1;
+}
+
+.landing-page .container {
+  position: relative; /* Pastikan container berada di atas overlay */
+  z-index: 2;
+  text-align: left; /* Mengatur semua teks agar rata kiri */
+  max-width: 600px; /* Batas lebar konten agar tidak terlalu melebar */
+  padding: 2rem 4rem; /* Padding untuk memberi ruang di sekitar teks */
+  /* Properti yang tidak perlu dari kode asli sudah dihapus (seperti height, background, box-shadow) */
+}
+
+.landing-page h1 {
+  font-size: 2.8rem;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  color: #eaf2ef;
+  text-shadow: 0 2px 12px rgba(34,49,63,0.18);
+}
+
+.landing-page .brand {
+  color: #7ed957;
+  font-weight: 800;
+  background: linear-gradient(90deg, var(--accent), var(--accent-light));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.landing-page p {
+  font-size: 1.3rem;
+  margin-bottom: 0;
+  color: #eaf2ef;
+  line-height: 1.7;
+  text-shadow: 0 1px 8px rgba(34,49,63,0.12);
+}
