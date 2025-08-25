@@ -214,7 +214,24 @@
     padding-left: 0.5rem;
     border-left: 2px solid var(--accent-light);
 }
-.doc-title { font-weight: bold; }
+
+.doc-title-link {
+    font-weight: bold;
+    color: var(--primary-color, #0056b3); /* Warna link yang jelas */
+    text-decoration: none; /* Hilangkan garis bawah default */
+    transition: color 0.2s ease, text-decoration 0.2s ease; /* Transisi halus */
+    display: block; /* Agar link memenuhi lebar dan mudah di-klik */
+    margin-bottom: 0.2rem;
+}
+
+.doc-title-link:hover {
+    color: var(--primary-dark, #003d82); /* Warna jadi lebih gelap saat hover */
+    text-decoration: underline; /* Tampilkan garis bawah saat hover */
+}
+
+.doc-title-link:active {
+    color: var(--accent-color, #d9534f); /* Warna berubah saat di-klik */
+}
 .doc-meta { font-size: 0.75rem; color: #888; margin: 0.2rem 0; }
 .doc-snippet { font-style: italic; color: #555; }
 

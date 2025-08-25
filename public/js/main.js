@@ -170,13 +170,22 @@ const loadConversation = () => {
             let sourcesHtml = '';
             let showSourceButtonHtml = '';
 
+            // ... kode Anda yang lain ...
+
             if (data.retrieved_docs && data.retrieved_docs.length > 0) {
                 showSourceButtonHtml = `<button class="source-toggle" data-action="show">Lihat Sumber</button>`;
                 sourcesHtml = `
                     <div class="sources-container hidden">
                         ${data.retrieved_docs.map(doc => `
                             <div class="doc-item">
-                                <p class="doc-title">${doc.rank}. ${doc.title}</p>
+                                <a href="/documents/${doc.file}" 
+                                target="_blank" 
+                                rel="noopener noreferrer" 
+                                class="doc-title-link"
+                                style="font-weight: bold; color: #303d3fff; text-decoration: none;"
+                                >
+                                    ${doc.rank}. ${doc.title}
+                                </a>
                                 <p class="doc-meta">(Similarity: ${doc.similarity})</p>
                                 <p class="doc-snippet">"${doc.snippet}"</p>
                             </div>

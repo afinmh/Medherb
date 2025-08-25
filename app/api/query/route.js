@@ -114,6 +114,7 @@ async function translateWithMistral(text, apiKey) {
 }
 
 // ---- Endpoint Handler ----
+// Ganti seluruh fungsi POST Anda dengan yang ini
 export async function POST(req) {
   try {
     const supabase = createClient(
@@ -126,15 +127,9 @@ export async function POST(req) {
       await loadEmbedder();
     }
 
-    const {
-      question
-    } = await req.json();
+    const { question } = await req.json();
     if (!question) {
-      return NextResponse.json({
-        error: "Question required"
-      }, {
-        status: 400
-      });
+      return NextResponse.json({ error: "Question required" }, { status: 400 });
     }
     console.log("🔎 Pertanyaan Asli (ID):", question);
 
@@ -143,72 +138,73 @@ export async function POST(req) {
     const embedder = modelState.instance;
     const out = await embedder(englishQuestion, {
       pooling: "mean",
-      normalize: true
+      normalize: true,
     });
     const queryVector = toVector(out);
 
-    const {
-      data,
-      error
-    } = await supabase.rpc("match_documents", {
+    const { data, error } = await supabase.rpc("match_documents", {
       query_embedding: queryVector,
       match_count: 5,
       match_threshold: 0.3,
     });
     if (error) throw new Error(`Supabase RPC error: ${error.message}`);
 
-    const context = (data || [])
-      .map((d, i) => {
-        const meta = safeJSON(d.metadata);
-        const title = meta.title || "Unknown";
-        const snippet = (d.content || "").slice(0, 500) + (d.content.length > 500 ? "..." : "");
-        return `[${i + 1}] (Sumber: ${title})\n${snippet}`;
-      })
+    // --- PERBAIKAN 1: Proses data Supabase SATU KALI saja ---
+    // Kita buat satu variabel `docs` yang bersih dan lengkap.
+    const docs = (data || []).slice(0, 5).map((d, i) => {
+      const meta = safeJSON(d.metadata);
+      return {
+        rank: i + 1,
+        title: meta.title || "Unknown Title",
+        file: meta.file || "unknown.pdf", // Ambil 'file' dari metadata! Ini yang terlewat.
+        similarity: typeof d.similarity === "number" ? d.similarity.toFixed(4) : "n/a",
+        snippet: (d.content || "").slice(0, 200) + "...",
+        content: d.content || "" // Simpan juga konten asli untuk 'context'
+      };
+    });
+
+    // Buat 'context' dari variabel `docs` yang sudah kita proses.
+    const context = docs
+      .map(d => `[${d.rank}] (Sumber: ${d.title})\n${d.content.slice(0, 500)}...`)
       .join("\n\n");
 
     const finalPrompt = `You are a helpful research assistant for herbal medicine. Use the following context to answer the question.\n\nContext:\n${context || "(no context found)"}\n\nQuestion: ${question}\nAnswer in Bahasa Indonesia (use bullet points if possible) and include sources (titles).`.trim();
 
     let answer = "(retrieval only)";
     if (MISTRAL_API_KEY) {
-      // Menggunakan fetchWithRetry yang sudah didefinisikan di atas
       const mr = await fetchWithRetry("https://api.mistral.ai/v1/chat/completions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${MISTRAL_API_KEY}`
+          Authorization: `Bearer ${MISTRAL_API_KEY}`,
         },
         body: JSON.stringify({
           model: "mistral-small-latest",
-          messages: [{
-            role: "system",
-            content: "You are a helpful assistant for herbal medicine."
-          }, {
-            role: "user",
-            content: finalPrompt
-          }, ],
+          messages: [
+            { role: "system", content: "You are a helpful assistant for herbal medicine." },
+            { role: "user", content: finalPrompt },
+          ],
         }),
       });
       if (!mr.ok) throw new Error(`Mistral answer API error: ${mr.status} ${await mr.text()}`);
       const mj = await mr.json();
       answer = mj.choices?.[0]?.message?.content ?? "(no answer)";
     }
+    
+    // --- PERBAIKAN 2: Gunakan `docs` yang sudah diproses untuk respons ---
+    // Kita tidak perlu memproses ulang, cukup hilangkan properti 'content' yang tidak perlu dikirim.
+    const retrieved_docs_for_frontend = docs.map(({ content, ...rest }) => rest);
 
     return NextResponse.json({
       answer,
-      retrieved_docs: (data || []).slice(0, 5).map((d, i) => ({
-        rank: i + 1,
-        title: safeJSON(d.metadata).title || "Unknown",
-        similarity: typeof d.similarity === "number" ? d.similarity.toFixed(4) : "n/a",
-        snippet: (d.content || "").slice(0, 200) + "...",
-      })),
+      retrieved_docs: retrieved_docs_for_frontend,
     });
 
   } catch (err) {
     console.error("💥 Error in /api/query:", err);
-    return NextResponse.json({
-      error: String(err.message || err)
-    }, {
-      status: 500
-    });
+    return NextResponse.json(
+      { error: String(err.message || err) },
+      { status: 500 }
+    );
   }
 }
