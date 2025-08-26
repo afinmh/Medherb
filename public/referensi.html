@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Si-Mbah - Referensi Dokumen</title>
+
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <link rel="stylesheet" href="/css/navbar.css"> 
+    <link rel="stylesheet" href="/css/footer.css">
+    <link rel="stylesheet" href="/css/chat.css">
+    
+    <link rel="stylesheet" href="/css/referensi.css"> 
+    
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="/js/main.js" defer></script> 
+</head>
+<body>
+    <header class="navbar scrolled">
+        <a href="/index" class="navbar-logo">
+            <img src="/favicon.png" alt="Logo SiMbah" class="logo-icon">
+            Si-Mbah<span>.</span>
+        </a>
+        <nav class="navbar-nav">
+            <a href="/index.html">Home</a>
+            <a href="/catatan.html">Catatan</a>
+            <a href="/kabar.html">Kabar</a>
+            <a href="/referensi.html">Referensi</a>
+        </nav>
+        <div class="navbar-extra">
+            <a href="/login.html" class="cta-button">Login</a>
+            <a href="#" id="hamburger-menu"><i data-feather="menu"></i></a>
+        </div>
+    </header>
+
+    <main class="news-section">
+        <div class="container">
+            <div class="news-header">
+                <h1>Referensi-Mbah</h1>
+                <p>Kumpulan jurnal, penelitian, dan dokumen referensi terkait dunia herbal.</p>
+            </div>
+            
+            <div id="docs-container" class="news-grid">
+                <div class="loading-indicator">
+                    <p>Sedang memuat dokumen...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+             <div class="footer-grid">
+                <div class="footer-col">
+                    <a href="#" class="footer-logo">
+                        <img src="favicon.png" alt="Logo Si-Mbah" class="footer-logo-img"> 
+                        Si-Mbah<span>.</span>
+                    </a>
+                    <p class="footer-mission">Melestarikan warisan herbal Indonesia melalui teknologi untuk generasi mendatang.</p>
+                </div>
+                <div class="footer-col">
+                    <h4 class="footer-heading">Jelajahi</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Beranda</a></li>
+                        <li><a href="#features">Fitur</a></li>
+                        <li><a href="#">Tentang Kami</a></li>
+                        <li><a href="#">Kontak</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4 class="footer-heading">Dukungan</h4>
+                    <ul class="footer-links">
+                        <li><a href="#">Pusat Bantuan</a></li>
+                        <li><a href="#">Kebijakan Privasi</a></li>
+                        <li><a href="#">Syarat & Ketentuan</a></li>
+                    </ul>
+                </div>
+                <div class="footer-col">
+                    <h4 class="footer-heading">Terhubung Dengan Kami</h4>
+                    <div class="social-links">
+                        <a href="#" aria-label="Instagram"><i data-feather="instagram"></i></a>
+                        <a href="#" aria-label="Facebook"><i data-feather="facebook"></i></a>
+                        <a href="#" aria-label="Twitter"><i data-feather="twitter"></i></a>
+                        <a href="#" aria-label="Youtube"><i data-feather="youtube"></i></a>
+                    </div>
+                </div>
+            </div>
+            <div class="footer-bottom">
+                <p>&copy; 2025 Si-Mbah. All rights reserved.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="chat-bubble" class="chat-bubble">
+        <i data-feather="message-square"></i>
+    </div>
+    <div id="chat-window" class="chat-window hidden">
+        </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const docsContainer = document.getElementById('docs-container');
+
+            const fetchDocuments = async () => {
+                try {
+                    // Panggil endpoint API yang sudah Anda buat
+                    const response = await fetch('/api/documents');
+
+                    if (!response.ok) {
+                        throw new Error(`Gagal mengambil data: Status ${response.status}`);
+                    }
+
+                    const data = await response.json();
+                    
+                    // Kosongkan indikator loading
+                    docsContainer.innerHTML = '';
+
+                    if (data.documents && data.documents.length > 0) {
+                        data.documents.forEach(doc => {
+                            // Ekstrak nama file untuk dijadikan judul
+                            const title = doc.file.replace('.pdf', '').replace(/_/g, ' ');
+
+                            const docCard = `
+                                <div class="news-card">
+                                    <div class="card-image">
+                                        <img src="/pdf-icon.png" alt="PDF Document" loading="lazy" style="object-fit: contain; padding: 2rem;">
+                                    </div>
+                                    <div class="card-content">
+                                        <p class="card-meta">Dokumen PDF</p>
+                                        <h3 class="card-title" style="text-transform: capitalize;">${title}</h3>
+                                        <p class="card-description">Klik untuk membuka dan membaca dokumen referensi ini.</p>
+                                        <a href="/documents/${doc.file}" target="_blank" rel="noopener noreferrer" class="card-link">
+                                            Lihat Dokumen <i data-feather="external-link"></i>
+                                        </a>
+                                    </div>
+                                </div>
+                            `;
+                            docsContainer.innerHTML += docCard;
+                        });
+                    } else {
+                        docsContainer.innerHTML = '<p class="error-message">Tidak ada dokumen referensi yang ditemukan.</p>';
+                    }
+
+                } catch (error) {
+                    console.error('Error fetching documents:', error);
+                    docsContainer.innerHTML = '<p class="error-message">Gagal memuat dokumen. Silakan coba lagi nanti.</p>';
+                } finally {
+                    // Inisialisasi ulang Feather Icons setelah konten dimuat
+                    feather.replace();
+                }
+            };
+
+            // Panggil fungsi untuk memuat dokumen
+            fetchDocuments();
+        });
+    </script>
+
+</body>
+</html>
