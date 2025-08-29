@@ -15,7 +15,7 @@ export async function GET(request) {
     const page = request.nextUrl.searchParams.get('page') || '1';
     // --- AKHIR PERUBAHAN ---
 
-    const query = 'herbal OR jamu OR tanaman obat OR sehat';
+    const query = 'obat tradisional OR tanaman obat OR pengobatan herbal OR herbal medicine OR jamu';
     const language = 'id';
     const pageSize = 9;
     const sortBy = 'publishedAt';

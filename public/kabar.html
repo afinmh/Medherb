@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Si-Mbah - Kabar Herbal Terkini</title>
+    <title>Si-Mbah | Kabar Herbal Terkini</title>
 
     <link rel="icon" type="image/png" href="/favicon.png">
 
@@ -29,7 +29,6 @@
             <a href="/referensi.html">Referensi</a>
         </nav>
         <div class="navbar-extra">
-            <a href="/login.html" class="cta-button">Login</a>
             <a href="#" id="hamburger-menu"><i data-feather="menu"></i></a>
         </div>
     </header>
@@ -37,8 +36,8 @@
     <main class="news-section">
         <div class="container">
             <div class="news-header">
-                <h1>Kabar-Mbah</h1>
-                <p>Berita dan artikel terbaru dari dunia herbal dan pengobatan tradisional.</p>
+                <h1><i data-feather="feather"></i> Kabar-Mbah <i data-feather="feather"></i></h1>
+                <p>Jelajahi berita, riset, dan tips terbaru dari dunia herbal dan pengobatan tradisional Indonesia.</p>
             </div>
             
             <div id="news-container" class="news-grid">
@@ -46,6 +45,7 @@
                     <p>Sedang memuat berita...</p>
                 </div>
             </div>
+            
             <div class="pagination-controls" id="pagination-controls" style="display:none">
                 <button class="page-btn" id="prev-btn" disabled>Prev</button>
                 <span class="page-info" id="page-info">Halaman 1</span>
@@ -141,6 +141,7 @@
             let currentPage = 1;
             let totalResults = 0;
             const pageSize = 9;
+            const dummyCategories = ['Riset', 'Tips', 'Tradisi']; // Kategori dummy untuk visual
 
             const fetchNews = async (page = 1) => {
                 try {
@@ -153,27 +154,32 @@
 
                     const data = await response.json();
                     totalResults = data.totalResults || 0;
-
-                    // Kosongkan indikator loading
                     newsContainer.innerHTML = '';
 
                     if (data.articles && data.articles.length > 0) {
-                        data.articles.forEach(article => {
-                            // Tangani jika ada data yang null
-                            const imageUrl = article.urlToImage || '/placeholder-image.jpg'; // Sediakan gambar placeholder
+                        data.articles.forEach((article, index) => {
+                            const imageUrl = article.urlToImage || '/placeholder-image.jpg';
                             const title = article.title || 'Judul tidak tersedia';
                             const description = article.description || 'Deskripsi tidak tersedia.';
                             const sourceName = article.source.name || 'Sumber tidak diketahui';
                             const publishedDate = new Date(article.publishedAt).toLocaleDateString('id-ID', {
                                 day: 'numeric', month: 'long', year: 'numeric'
                             });
+                            
+                            // Logika untuk Artikel Unggulan: artikel pertama di halaman pertama
+                            const isFeatured = (index === 0 && page === 1);
+                            const cardClass = isFeatured ? 'news-card featured' : 'news-card';
+                            
+                            // Pilih kategori secara acak untuk demo visual
+                            const category = dummyCategories[Math.floor(Math.random() * dummyCategories.length)];
 
                             const articleCard = `
-                                <div class="news-card">
+                                <div class="${cardClass}" style="animation-delay: ${index * 100}ms;">
                                     <div class="card-image">
                                         <img src="${imageUrl}" alt="${title}" loading="lazy">
                                     </div>
                                     <div class="card-content">
+                                        <span class="card-category">${category}</span>
                                         <p class="card-meta">${sourceName} &bull; ${publishedDate}</p>
                                         <h3 class="card-title">${title}</h3>
                                         <p class="card-description">${description}</p>
@@ -189,7 +195,6 @@
                         newsContainer.innerHTML = '<p class="error-message">Tidak ada berita yang ditemukan.</p>';
                     }
 
-                    // Pagination logic
                     const totalPages = Math.ceil(totalResults / pageSize);
                     pageInfo.textContent = `Halaman ${page} dari ${totalPages}`;
                     prevBtn.disabled = page <= 1;
@@ -201,8 +206,7 @@
                     newsContainer.innerHTML = '<p class="error-message">Gagal memuat berita. Silakan coba lagi nanti.</p>';
                     paginationControls.style.display = 'none';
                 } finally {
-                    // Re-initialize Feather Icons setelah konten dimuat
-                    feather.replace();
+                    feather.replace(); // Inisialisasi ulang Feather Icons
                 }
             };
 
@@ -210,87 +214,25 @@
                 if (currentPage > 1) {
                     currentPage--;
                     fetchNews(currentPage);
+                    window.scrollTo(0, 0); // Gulir ke atas halaman saat ganti halaman
                 }
             });
+
             nextBtn.addEventListener('click', () => {
                 const totalPages = Math.ceil(totalResults / pageSize);
                 if (currentPage < totalPages) {
                     currentPage++;
                     fetchNews(currentPage);
+                    window.scrollTo(0, 0); // Gulir ke atas halaman saat ganti halaman
                 }
             });
 
+            // Panggil fungsi untuk memuat berita pertama kali
             fetchNews(currentPage);
         });
-    </script>
-        <script>
-        window.onscroll = function() {
-        const header = document.querySelector('header.navbar');
-        const fixedNav = header.offsetTop;
-
-        if (window.pageYOffset > fixedNav) {
-            header.classList.add('scrolled');
-        } else {
-            header.classList.remove('scrolled');
-        }
-    };
-
-    // Fungsi Hamburger Menu
-    const hamburger = document.querySelector('#hamburger-menu');
-    const navbarNav = document.querySelector('.navbar-nav');
-
-    hamburger.onclick = (e) => {
-        navbarNav.classList.toggle('active');
-        e.preventDefault(); // Mencegah aksi default
-    };
-
-    // Klik di luar sidebar untuk menghilangkan nav
-    document.addEventListener('click', function(e) {
-        if (!hamburger.contains(e.target) && !navbarNav.contains(e.target)) {
-            navbarNav.classList.remove('active');
-        }
-    });
-
-    // Initialize Feather Icons
-    feather.replace();
-
-    // Animate numbers when in viewport
-    function animateNumbers() {
-        const statNumbers = document.querySelectorAll('.stat-number');
         
-        statNumbers.forEach(stat => {
-            const target = stat.textContent;
-            const number = parseInt(target.replace(/[^\d]/g, ''));
-            const suffix = target.replace(/[\d]/g, '');
-            
-            if (number && !stat.classList.contains('animated')) {
-                stat.classList.add('animated');
-                let current = 0;
-                const increment = number / 40;
-                
-                const timer = setInterval(() => {
-                    current += increment;
-                    if (current >= number) {
-                        current = number;
-                        clearInterval(timer);
-                    }
-                    stat.textContent = Math.floor(current) + suffix;
-                }, 40);
-            }
-        });
-    }
-
-    // Trigger animation when section is visible
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) {
-                animateNumbers();
-            }
-        });
-    }, { threshold: 0.5 });
-
-    observer.observe(document.querySelector('.statistics'));
+        // Letakkan skrip lain (hamburger, dll.) di sini jika ada
+        // ...
     </script>
-
 </body>
 </html>
