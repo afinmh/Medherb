@@ -1,5 +1,6 @@
+/* Styling untuk Desktop (Kode Asli) */
 body, html {
-  height: 100%; /* Menggunakan 100% lebih konsisten untuk body/html */
+  height: 100%;
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', 'Arial', sans-serif;
@@ -7,11 +8,11 @@ body, html {
 }
 
 .landing-page {
-  height: 100vh; /* Mengganti min-height menjadi height agar pas 100vh */
+  height: 100vh;
   background: url('../images/herbal-bg.jpg') center center/cover no-repeat;
   display: flex;
-  align-items: center; /* Menjaga konten tetap di tengah secara vertikal */
-  justify-content: flex-start; /* Menggeser konten ke kiri */
+  align-items: center;
+  justify-content: flex-start; /* Konten di kiri pada desktop */
   color: #fff;
   text-shadow: 0 2px 8px rgba(0,0,0,0.3);
   position: relative;
@@ -22,19 +23,18 @@ body, html {
   position: absolute;
   left: 0;
   top: 0;
-  width: 60%; /* Lebar gradien overlay di kiri */
+  width: 60%; /* Gradien hanya di sisi kiri pada desktop */
   height: 100%;
   background: linear-gradient(90deg, rgba(34,49,63,0.8) 70%, rgba(34,49,63,0) 100%);
   z-index: 1;
 }
 
 .landing-page .container {
-  position: relative; /* Pastikan container berada di atas overlay */
+  position: relative;
   z-index: 2;
-  text-align: left; /* Mengatur semua teks agar rata kiri */
-  max-width: 600px; /* Batas lebar konten agar tidak terlalu melebar */
-  padding: 2rem 4rem; /* Padding untuk memberi ruang di sekitar teks */
-  /* Properti yang tidak perlu dari kode asli sudah dihapus (seperti height, background, box-shadow) */
+  text-align: left; /* Teks rata kiri pada desktop */
+  max-width: 600px;
+  padding: 2rem 4rem;
 }
 
 .landing-page h1 {
@@ -48,6 +48,8 @@ body, html {
 .landing-page .brand {
   color: #7ed957;
   font-weight: 800;
+  /* Properti gradient teks ini mungkin tidak didukung di semua browser lama,
+     namun akan berfungsi di browser modern. */
   background: linear-gradient(90deg, var(--accent), var(--accent-light));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -60,4 +62,31 @@ body, html {
   color: #eaf2ef;
   line-height: 1.7;
   text-shadow: 0 1px 8px rgba(34,49,63,0.12);
+}
+
+/* --- Tambahan CSS untuk Mobile (Responsive) --- */
+/* Target untuk layar dengan lebar maksimal 768px (umum untuk tablet dan mobile) */
+@media (max-width: 768px) {
+  .landing-page {
+    justify-content: center; /* Pindahkan konten ke tengah secara horizontal */
+  }
+
+  .landing-page::before {
+    width: 100%; /* Gradien menutupi seluruh layar agar teks lebih mudah dibaca */
+    background: linear-gradient(90deg, rgba(34,49,63,0.85) 0%, rgba(34,49,63,0.7) 100%);
+  }
+
+  .landing-page .container {
+    text-align: center; /* Teks menjadi rata tengah */
+    padding: 1.5rem;   /* Kurangi padding agar tidak terlalu mepet di layar kecil */
+    max-width: 90%;    /* Gunakan persentase agar lebih fleksibel */
+  }
+
+  .landing-page h1 {
+    font-size: 2.2rem; /* Kecilkan ukuran font judul */
+  }
+
+  .landing-page p {
+    font-size: 1.1rem; /* Kecilkan ukuran font paragraf */
+  }
 }

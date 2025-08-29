@@ -18,7 +18,7 @@
 </head>
 <body>
     <header class="navbar scrolled">
-        <a href="/index" class="navbar-logo">
+        <a href="/index.html" class="navbar-logo">
             <img src="/favicon.png" alt="Logo SiMbah" class="logo-icon">
             Si-Mbah<span>.</span>
         </a>
@@ -222,6 +222,74 @@
 
             fetchNews(currentPage);
         });
+    </script>
+        <script>
+        window.onscroll = function() {
+        const header = document.querySelector('header.navbar');
+        const fixedNav = header.offsetTop;
+
+        if (window.pageYOffset > fixedNav) {
+            header.classList.add('scrolled');
+        } else {
+            header.classList.remove('scrolled');
+        }
+    };
+
+    // Fungsi Hamburger Menu
+    const hamburger = document.querySelector('#hamburger-menu');
+    const navbarNav = document.querySelector('.navbar-nav');
+
+    hamburger.onclick = (e) => {
+        navbarNav.classList.toggle('active');
+        e.preventDefault(); // Mencegah aksi default
+    };
+
+    // Klik di luar sidebar untuk menghilangkan nav
+    document.addEventListener('click', function(e) {
+        if (!hamburger.contains(e.target) && !navbarNav.contains(e.target)) {
+            navbarNav.classList.remove('active');
+        }
+    });
+
+    // Initialize Feather Icons
+    feather.replace();
+
+    // Animate numbers when in viewport
+    function animateNumbers() {
+        const statNumbers = document.querySelectorAll('.stat-number');
+        
+        statNumbers.forEach(stat => {
+            const target = stat.textContent;
+            const number = parseInt(target.replace(/[^\d]/g, ''));
+            const suffix = target.replace(/[\d]/g, '');
+            
+            if (number && !stat.classList.contains('animated')) {
+                stat.classList.add('animated');
+                let current = 0;
+                const increment = number / 40;
+                
+                const timer = setInterval(() => {
+                    current += increment;
+                    if (current >= number) {
+                        current = number;
+                        clearInterval(timer);
+                    }
+                    stat.textContent = Math.floor(current) + suffix;
+                }, 40);
+            }
+        });
+    }
+
+    // Trigger animation when section is visible
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                animateNumbers();
+            }
+        });
+    }, { threshold: 0.5 });
+
+    observer.observe(document.querySelector('.statistics'));
     </script>
 
 </body>
