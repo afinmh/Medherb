@@ -30,6 +30,7 @@ body {
     display: flex;
     align-items: center;
     box-sizing: border-box; /* <-- TAMBAHKAN INI */
+    overflow-y: hidden;
 }
 
 .about::before {

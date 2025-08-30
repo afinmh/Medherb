@@ -3,6 +3,7 @@
   padding: 5rem 0;
   background: linear-gradient(135deg, #f8fbfa 0%, #edf5f0 100%);
   position: relative;
+  overflow-y: hidden;
 }
 
 .features::before {

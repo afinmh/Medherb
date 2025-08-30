@@ -13,6 +13,7 @@
     <link rel="stylesheet" href="/css/footer.css">
     <link rel="stylesheet" href="/css/chat.css">
     <link rel="stylesheet" href="/css/about.css">
+    <link href="https://unpkg.com/aos@2.3.1/dist/aos.css" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="/js/main.js" defer></script>
 </head>
@@ -35,22 +36,22 @@
 
     <section class="landing-page">
         <div class="container">
-            <h1>Jelajahi Dunia Herbal dengan Mudah.</h1>
-            <p>Dari obrolan herbal dengan AI, eksplorasi ensiklopedia tanaman, hingga validasi jurnal ilmiah. <span class="brand">Si-Mbah</span> adalah partner herbal cerdas Anda.</p>
+            <h1 data-aos="fade-right" data-aos-duration="2000">Jelajahi Dunia Herbal dengan Mudah.</h1>
+            <p data-aos="fade-right" data-aos-duration="3000">Dari obrolan herbal dengan AI, eksplorasi ensiklopedia tanaman, hingga validasi jurnal ilmiah. <span class="brand">Si-Mbah</span> adalah partner herbal cerdas Anda.</p>
         </div>
     </section>
 
     <section id="features" class="features">
         <div class="container">
-            <h2>Jelajahi Ekosistem Si-Mbah</h2>
-            <div class="feature-grid">
-                
+            <h2 data-aos="fade-up" data-aos-duration="2000">Jelajahi Ekosistem Si-Mbah</h2>
+            <div class="feature-grid" data-aos="fade-left" data-aos-duration="2000">
+
                 <div class="feature-item">
                     <i data-feather="message-circle"></i>
                     <h3>Tanya-Mbah</h3>
                     <p>Punya pertanyaan herbal? Tanyakan langsung pada asisten AI kami. Dapatkan jawaban yang personal dan mudah dipahami dalam hitungan detik.</p>
                 </div>
-                
+
                 <div class="feature-item">
                     <i data-feather="book-open"></i>
                     <h3>Catatan-Mbah</h3>
@@ -70,7 +71,7 @@
         <div class="container">
             <div class="about-content">
                 <!-- Story Section (Left) -->
-                <div class="about-story">
+                <div class="about-story" data-aos="fade-right" data-aos-duration="2000">
                     <div class="story-header">
                         <div class="story-icon">
                             <i data-feather="heart"></i>
@@ -90,7 +91,7 @@
                 </div>
 
                 <!-- Statistics Section (Right) -->
-                <div class="statistics">
+                <div class="statistics" data-aos="fade-left" data-aos-duration="2000">
                     <div class="statistics-content">
                         <div class="statistics-header">
                             <h3>Si-Mbah dalam Angka</h3>
@@ -203,7 +204,9 @@
         </div>
     </div>
 
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
     <script>
+        AOS.init();
         window.onscroll = function() {
         const header = document.querySelector('header.navbar');
         const fixedNav = header.offsetTop;
