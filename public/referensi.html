@@ -39,11 +39,20 @@
         <div class="container">
             <div class="news-header">
                 <h1>Referensi-Mbah</h1>
-                <p>Kumpulan jurnal, penelitian, dan dokumen referensi terkait dunia herbal.</p>
+                <p>Kumpulan jurnal, penelitian, dan dokumen referensi terkait dunia herbal yang tersimpan dalam database kami.</p>
+                
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <div style="position: relative;">
+                        <i data-feather="search" class="search-icon"></i>
+                        <input type="text" id="search-input" class="search-box" placeholder="Cari jurnal berdasarkan judul atau penulis...">
+                    </div>
+                </div>
             </div>
             
             <div id="docs-container">
                 <div class="loading-indicator">
+                    <div class="loading-spinner"></div>
                     <p>Sedang memuat dokumen...</p>
                 </div>
             </div>
@@ -139,104 +148,177 @@
             const prevBtn = document.getElementById('prev-btn');
             const nextBtn = document.getElementById('next-btn');
             const pageInfo = document.getElementById('page-info');
+            const searchInput = document.getElementById('search-input');
 
             // -- PENGATURAN PAGINATION --
-            let allDocuments = []; // Menyimpan semua dokumen dari API
             let currentPage = 1;
-            const pageSize = 10; // 10 dokumen per halaman
+            let totalPages = 1;
+            let currentSearch = '';
+            const pageSize = 12; // 12 dokumen per halaman
+            let searchTimeout;
 
-            // Fungsi untuk menampilkan dokumen pada halaman tertentu
-            const displayPage = (page) => {
+            // Fungsi untuk menampilkan dokumen dari database
+            const displayDocuments = async (page = 1, search = '') => {
                 currentPage = page;
-                docsContainer.innerHTML = ''; // Kosongkan container
+                currentSearch = search;
 
-                // Hitung indeks awal dan akhir untuk data halaman ini
-                const startIndex = (page - 1) * pageSize;
-                const endIndex = startIndex + pageSize;
-                const documentsOnPage = allDocuments.slice(startIndex, endIndex);
+                // Show loading
+                docsContainer.innerHTML = `
+                    <div class="loading-indicator">
+                        <div class="loading-spinner"></div>
+                        <p>Sedang memuat dokumen...</p>
+                    </div>
+                `;
 
-                // Tampilkan dokumen untuk halaman ini
-                if (documentsOnPage.length > 0) {
-                    documentsOnPage.forEach(doc => {
-                        const title = doc.file.replace('.pdf', '').replace(/_/g, ' ');
-                        const docCard = `
-                            <div class="doc-card">
-                                <div class="doc-icon">
-                                    <i data-feather="file-text"></i>
-                                </div>
-                                <div class="doc-content">
-                                    <h3 class="doc-title">${title}</h3>
-                                    <p class="doc-meta">Jenis Dokumen: PDF</p>
-                                    <p class="doc-description">Dokumen penelitian ilmiah dan referensi pustaka yang dapat Anda baca dan unduh.</p>
-                                    <a href="/documents/${doc.file}" target="_blank" rel="noopener noreferrer" class="doc-link">
-                                        Buka Dokumen
-                                        <i data-feather="external-link"></i>
-                                    </a>
-                                </div>
-                            </div>
-                        `;
-                        docsContainer.innerHTML += docCard;
-                    });
-                } else {
-                    docsContainer.innerHTML = '<p class="error-message">Tidak ada dokumen di halaman ini.</p>';
-                }
-
-                // Update info dan tombol pagination
-                updatePaginationControls();
-                feather.replace(); // Inisialisasi ulang ikon
-                window.scrollTo(0, 0); // Gulir ke atas halaman
-            };
-
-            // Fungsi untuk memperbarui kontrol pagination
-            const updatePaginationControls = () => {
-                const totalPages = Math.ceil(allDocuments.length / pageSize);
-
-                if (totalPages > 1) {
-                    paginationControls.style.display = 'flex';
-                    pageInfo.textContent = `Halaman ${currentPage} dari ${totalPages}`;
-                    prevBtn.disabled = currentPage === 1;
-                    nextBtn.disabled = currentPage === totalPages;
-                } else {
-                    paginationControls.style.display = 'none';
-                }
-            };
-
-            // Ambil semua data sekali, lalu kelola dengan pagination
-            const fetchAllDocuments = async () => {
                 try {
-                    const response = await fetch('/api/documents');
+                    // Build API URL
+                    const params = new URLSearchParams({
+                        page: page.toString(),
+                        limit: pageSize.toString()
+                    });
+                    
+                    if (search) {
+                        params.append('search', search);
+                    }
+
+                    const response = await fetch(`/api/documents?${params}`);
                     if (!response.ok) throw new Error('Gagal mengambil data');
                     
                     const data = await response.json();
-                    allDocuments = data.documents || [];
+                    const documents = data.documents || [];
+                    const pagination = data.pagination || {};
 
-                    if (allDocuments.length > 0) {
-                        displayPage(1); // Tampilkan halaman pertama
+                    // Update pagination info
+                    totalPages = pagination.totalPages || 1;
+                    
+                    docsContainer.innerHTML = ''; // Clear container
+
+                    if (documents.length > 0) {
+                        documents.forEach(doc => {
+                            const docCard = createDocumentCard(doc);
+                            docsContainer.appendChild(docCard);
+                        });
                     } else {
-                        docsContainer.innerHTML = '<p class="error-message">Tidak ada dokumen referensi yang ditemukan.</p>';
+                        docsContainer.innerHTML = `
+                            <div class="empty-message">
+                                <p><i data-feather="file-text" style="width: 48px; height: 48px; margin-bottom: 1rem;"></i></p>
+                                <p>Tidak ada dokumen yang ditemukan${search ? ` untuk pencarian "${search}"` : ''}.</p>
+                            </div>
+                        `;
                     }
+
+                    // Update pagination controls
+                    updatePaginationControls(pagination);
+                    
+                    // Initialize feather icons
+                    feather.replace();
+                    
+                    // Scroll to top
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
                 } catch (error) {
                     console.error('Error fetching documents:', error);
-                    docsContainer.innerHTML = `<p class="error-message">${error.message}</p>`;
+                    docsContainer.innerHTML = `
+                        <div class="error-message">
+                            <p>❌ ${error.message}</p>
+                            <button onclick="displayDocuments(${page}, '${search}')" style="margin-top: 1rem; padding: 0.5rem 1rem; background: var(--accent); color: white; border: none; border-radius: 4px; cursor: pointer;">Coba Lagi</button>
+                        </div>
+                    `;
                 }
             };
+
+            // Fungsi untuk membuat card dokumen
+            const createDocumentCard = (doc) => {
+                const card = document.createElement('div');
+                card.className = 'doc-card';
+                
+                // Format tahun
+                const year = doc.tahun ? doc.tahun.toString() : 'N/A';
+                
+                // Truncate title dan penulis jika terlalu panjang
+                const title = doc.judul || 'Judul tidak tersedia';
+                const author = doc.penulis || 'Penulis tidak diketahui';
+                
+                // Create description from title (first 100 chars)
+                const description = title.length > 100 ? title.substring(0, 100) + '...' : title;
+
+                card.innerHTML = `
+                    <div class="doc-header">
+                        <h3 class="doc-title">${title}</h3>
+                        <div class="doc-meta">
+                            <div class="doc-meta-item">
+                                <i data-feather="user"></i>
+                                <span>${author}</span>
+                            </div>
+                            <div class="doc-year">${year}</div>
+                        </div>
+                    </div>
+                    <div class="doc-content">
+                        <p class="doc-description">${description}</p>
+                        <div class="doc-footer">
+                            <a href="${doc.file_url}" target="_blank" rel="noopener noreferrer" class="doc-link">
+                                <i data-feather="external-link"></i>
+                                Buka Dokumen
+                            </a>
+                            <div class="doc-stats">
+                                <i data-feather="file-text"></i>
+                                PDF
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                return card;
+            };
+
+            // Fungsi untuk memperbarui kontrol pagination
+            const updatePaginationControls = (pagination) => {
+                if (!pagination || totalPages <= 1) {
+                    paginationControls.style.display = 'none';
+                    return;
+                }
+
+                paginationControls.style.display = 'flex';
+                pageInfo.textContent = `Halaman ${currentPage} dari ${totalPages} (${pagination.totalDocuments} dokumen)`;
+                prevBtn.disabled = !pagination.hasPrevPage;
+                nextBtn.disabled = !pagination.hasNextPage;
+            };
+
+            // Search functionality
+            const handleSearch = () => {
+                const searchTerm = searchInput.value.trim();
+                displayDocuments(1, searchTerm);
+            };
+
+            // Debounced search
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(handleSearch, 500);
+            });
+
+            // Search on Enter key
+            searchInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    clearTimeout(searchTimeout);
+                    handleSearch();
+                }
+            });
             
-            // Tambahkan event listener untuk tombol
+            // Event listeners untuk pagination
             prevBtn.addEventListener('click', () => {
                 if (currentPage > 1) {
-                    displayPage(currentPage - 1);
+                    displayDocuments(currentPage - 1, currentSearch);
                 }
             });
 
             nextBtn.addEventListener('click', () => {
-                const totalPages = Math.ceil(allDocuments.length / pageSize);
                 if (currentPage < totalPages) {
-                    displayPage(currentPage + 1);
+                    displayDocuments(currentPage + 1, currentSearch);
                 }
             });
 
-            // Panggil fungsi awal
-            fetchAllDocuments();
+            // Initial load
+            displayDocuments(1);
         });
 
     window.onscroll = function() {

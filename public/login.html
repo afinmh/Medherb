@@ -67,6 +67,7 @@
     </div>
 
     <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <script>
         AOS.init();
@@ -77,11 +78,22 @@
         const alertDiv = document.getElementById("alert");
 
         function showAlert(message, type) {
-            alertDiv.textContent = message;
-            alertDiv.className = `alert ${type} show`;
-            setTimeout(() => {
-                alertDiv.classList.remove("show");
-            }, 5000);
+            if (type === 'success') {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Berhasil!',
+                    text: message,
+                    showConfirmButton: false,
+                    timer: 2000
+                });
+            } else if (type === 'error') {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Oops!',
+                    text: message,
+                    confirmButtonText: 'OK'
+                });
+            }
         }
 
         function setLoading(isLoading) {
@@ -114,8 +126,6 @@
                 const data = await res.json();
                 
                 if (res.ok) {
-                    showAlert("Login berhasil! Mengalihkan...", "success");
-                    
                     const normalizedUser = {
                         id: data.user.id,
                         email: data.user.email,
@@ -131,9 +141,16 @@
                         localStorage.setItem('access_token', data.session.access_token);
                     }
                     
-                    setTimeout(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Login Berhasil!',
+                        text: `Selamat datang, ${normalizedUser.name}!`,
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
                         window.location.href = "/index.html";
-                    }, 1500);
+                    });
                 } else {
                     showAlert(data.error || "Terjadi kesalahan saat login", "error");
                 }
@@ -174,10 +191,16 @@
                     
                     window.history.replaceState({}, document.title, window.location.pathname);
                     
-                    showAlert("Login berhasil! Mengalihkan...", "success");
-                    setTimeout(() => {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Login Berhasil!',
+                        text: `Selamat datang, ${userData.name}!`,
+                        showConfirmButton: false,
+                        timer: 2000,
+                        timerProgressBar: true
+                    }).then(() => {
                         window.location.href = "/index.html";
-                    }, 1500);
+                    });
                 } catch (error) {
                     console.error('Error parsing token:', error);
                     showAlert("Token tidak valid", "error");

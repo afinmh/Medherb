@@ -14,297 +14,119 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="../css/navbar.css">
     <link rel="stylesheet" href="../css/footer.css">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            line-height: 1.6;
-            color: #333;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 100px 20px 50px;
-        }
-
-        .profile-header {
-            background: white;
-            border-radius: 20px;
-            padding: 2rem;
-            margin-bottom: 2rem;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-            text-align: center;
-        }
-
-        .profile-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 1rem;
-            border: 4px solid #5A7D7C;
-            object-fit: cover;
-        }
-
-        .default-avatar {
-            width: 120px;
-            height: 120px;
-            border-radius: 50%;
-            margin: 0 auto 1rem;
-            border: 4px solid #5A7D7C;
-            background: #5A7D7C;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 3rem;
-            color: white;
-            font-weight: 600;
-        }
-
-        .profile-name {
-            font-size: 2rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 0.5rem;
-        }
-
-        .profile-email {
-            color: #666;
-            font-size: 1.1rem;
-            margin-bottom: 1rem;
-        }
-
-        .profile-role {
-            display: inline-block;
-            background: #5A7D7C;
-            color: white;
-            padding: 0.5rem 1rem;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 600;
-            text-transform: uppercase;
-        }
-
-        .profile-content {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 2rem;
-        }
-
-        .profile-card {
-            background: white;
-            border-radius: 15px;
-            padding: 2rem;
-            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.1);
-        }
-
-        .card-title {
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 1.5rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .form-group {
-            margin-bottom: 1.5rem;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 600;
-            color: #555;
-            margin-bottom: 0.5rem;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 0.75rem;
-            border: 2px solid #e1e5e9;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border-color 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #5A7D7C;
-        }
-
-        .btn {
-            background: #5A7D7C;
-            color: white;
-            border: none;
-            padding: 0.75rem 1.5rem;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 600;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn:hover {
-            background: #4a6b6a;
-            transform: translateY(-2px);
-        }
-
-        .activity-item {
-            display: flex;
-            align-items: center;
-            gap: 1rem;
-            padding: 1rem;
-            border-bottom: 1px solid #e1e5e9;
-        }
-
-        .activity-item:last-child {
-            border-bottom: none;
-        }
-
-        .activity-icon {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            background: #f0f9ff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #5A7D7C;
-        }
-
-        .activity-content {
-            flex: 1;
-        }
-
-        .activity-title {
-            font-weight: 600;
-            color: #333;
-        }
-
-        .activity-time {
-            color: #666;
-            font-size: 0.9rem;
-        }
-
-        @media (max-width: 768px) {
-            .profile-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .container {
-                padding: 80px 15px 30px;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="../css/user-profile.css">
 </head>
 <body>
-    <!-- Navbar -->
+    <!-- Navbar is hidden via CSS -->
     <nav class="navbar" id="navbar">
         <a href="../index.html" class="navbar-logo">Si-Mbah<span>.</span></a>
-        
         <div class="navbar-nav">
             <a href="../index.html">Beranda</a>
             <a href="../referensi.html">Referensi</a>
             <a href="../kabar.html">Kabar</a>
             <a href="../catatan.html">Catatan</a>
         </div>
-        
         <div class="navbar-extra">
-            <!-- Login/Profile section will be populated by JavaScript -->
             <div id="auth-section"></div>
             <a href="#" id="hamburger-menu"><i data-feather="menu"></i></a>
         </div>
     </nav>
 
-    <div class="container">
-        <!-- Profile Header -->
-        <div class="profile-header">
-            <div id="user-avatar-container"></div>
-            <h1 class="profile-name" id="profile-name">Loading...</h1>
-            <p class="profile-email" id="profile-email">Loading...</p>
-            <span class="profile-role" id="profile-role">USER</span>
-        </div>
+    <!-- Profile Page Container -->
+    <div class="profile-layout">
+        <!-- Sidebar Menu -->
+        <aside class="sidebar">
+            <div>
+                <div class="sidebar-user-info">
+                    <div id="sidebar-avatar-container">
+                        <div class="default-avatar">U</div>
+                    </div>
+                    <h2 class="profile-name" id="sidebar-profile-name">Loading...</h2>
+                    <p class="profile-email" id="sidebar-profile-email">Loading...</p>
+                </div>
+                <nav class="sidebar-nav">
+                    <a class="nav-item active" data-target="profil-section">
+                        <i data-feather="user"></i>
+                        <span>Profil</span>
+                    </a>
+                    <a class="nav-item" data-target="herbalku-section">
+                        <i data-feather="book-open"></i>
+                        <span>Herbalku</span>
+                    </a>
+                    <a class="nav-item" data-target="pengaturan-section">
+                        <i data-feather="settings"></i>
+                        <span>Pengaturan</span>
+                    </a>
+                </nav>
+            </div>
+            <div class="sidebar-bottom">
+                <button class="btn-logout">
+                    <i data-feather="log-out"></i>
+                    <span>Logout</span>
+                </button>
+            </div>
+        </aside>
 
-        <!-- Profile Content -->
-        <div class="profile-content">
-            <!-- Personal Information -->
-            <div class="profile-card">
-                <h2 class="card-title">
-                    <i data-feather="user"></i>
-                    Informasi Pribadi
-                </h2>
+        <!-- Content Area -->
+        <main class="main-content">
+            <!-- Mobile Sidebar Toggle -->
+            <button class="sidebar-toggle" id="sidebar-toggle" style="display: none;">
+                <i data-feather="menu"></i>
+            </button>
+            
+            <!-- Profile Section -->
+            <section id="profil-section" class="content-section active">
+                <div class="content-header">
+                    <h2>Informasi Pribadi</h2>
+                </div>
                 <form id="profile-form">
                     <div class="form-group">
-                        <label class="form-label">Nama Lengkap</label>
-                        <input type="text" class="form-input" id="full-name" placeholder="Masukkan nama lengkap">
+                        <label for="full-name" class="form-label">Nama Lengkap</label>
+                        <input type="text" class="form-input" id="full-name" placeholder="Masukkan nama lengkap Anda">
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Email</label>
+                        <label for="email" class="form-label">Alamat Email</label>
                         <input type="email" class="form-input" id="email" readonly>
                     </div>
                     <div class="form-group">
-                        <label class="form-label">Nomor Telepon</label>
-                        <input type="tel" class="form-input" id="phone" placeholder="Masukkan nomor telepon">
+                        <label for="phone" class="form-label">Nomor Telepon</label>
+                        <input type="tel" class="form-input" id="phone" placeholder="Contoh: 081234567890">
                     </div>
-                    <button type="submit" class="btn">
+                    <button type="submit" class="btn-submit">
                         <i data-feather="save"></i>
                         Simpan Perubahan
                     </button>
                 </form>
-            </div>
+            </section>
 
-            <!-- Recent Activity -->
-            <div class="profile-card">
-                <h2 class="card-title">
-                    <i data-feather="activity"></i>
-                    Aktivitas Terbaru
-                </h2>
-                <div id="activity-list">
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i data-feather="log-in"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Login ke sistem</div>
-                            <div class="activity-time">Hari ini</div>
-                        </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i data-feather="search"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Mencari informasi herbal</div>
-                            <div class="activity-time">2 jam yang lalu</div>
-                        </div>
-                    </div>
-                    <div class="activity-item">
-                        <div class="activity-icon">
-                            <i data-feather="bookmark"></i>
-                        </div>
-                        <div class="activity-content">
-                            <div class="activity-title">Menyimpan artikel</div>
-                            <div class="activity-time">1 hari yang lalu</div>
-                        </div>
-                    </div>
+            <!-- Herbalku Section -->
+            <section id="herbalku-section" class="content-section">
+                <div class="content-header">
+                    <h2>Herbalku</h2>
                 </div>
-            </div>
-        </div>
+                <div class="placeholder-content">
+                    <i data-feather="book-open"></i>
+                    <h3>Segera Hadir</h3>
+                    <p>Fitur ini sedang dalam pengembangan. Di sini Anda akan dapat melihat koleksi herbal yang Anda simpan.</p>
+                </div>
+            </section>
+
+            <!-- Settings Section -->
+            <section id="pengaturan-section" class="content-section">
+                <div class="content-header">
+                    <h2>Pengaturan</h2>
+                </div>
+                <div class="placeholder-content">
+                    <i data-feather="settings"></i>
+                    <h3>Segera Hadir</h3>
+                    <p>Opsi pengaturan untuk akun Anda akan tersedia di sini di masa mendatang.</p>
+                </div>
+            </section>
+        </main>
     </div>
 
-    <!-- Footer -->
-    <footer>
+    <!-- Footer is hidden by CSS in this layout -->
+    <footer class="footer">
         <div class="socials">
             <a href="#"><i data-feather="instagram"></i></a>
             <a href="#"><i data-feather="facebook"></i></a>
@@ -323,144 +145,6 @@
 
     <!-- JavaScript -->
     <script src="../js/main.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Check if user is logged in and is a regular user
-            checkPageAccess('user');
-            
-            // Initialize page
-            initializeProfilePage();
-            
-            // Load user profile data
-            loadUserProfile();
-            
-            // Handle profile form submission
-            document.getElementById('profile-form').addEventListener('submit', handleProfileUpdate);
-        });
-
-        async function loadUserProfile() {
-            try {
-                const user = JSON.parse(localStorage.getItem('user'));
-                const token = localStorage.getItem('access_token');
-
-                if (!user || !token) {
-                    throw new Error('User not authenticated');
-                }
-
-                // Update profile header
-                document.getElementById('profile-name').textContent = user.name;
-                document.getElementById('profile-email').textContent = user.email;
-                document.getElementById('profile-role').textContent = user.role?.toUpperCase() || 'USER';
-
-                // Update avatar
-                const avatarContainer = document.getElementById('user-avatar-container');
-                if (user.avatar) {
-                    avatarContainer.innerHTML = `<img src="${user.avatar}" alt="Avatar" class="profile-avatar">`;
-                } else {
-                    const initial = user.name.charAt(0).toUpperCase();
-                    avatarContainer.innerHTML = `<div class="default-avatar">${initial}</div>`;
-                }
-
-                // Update form fields
-                document.getElementById('full-name').value = user.name;
-                document.getElementById('email').value = user.email;
-
-                // Fetch additional profile data from API
-                const response = await fetch('/api/auth/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Content-Type': 'application/json'
-                    }
-                });
-
-                if (response.ok) {
-                    const profileData = await response.json();
-                    if (profileData.profile?.phone) {
-                        document.getElementById('phone').value = profileData.profile.phone;
-                    }
-                }
-
-            } catch (error) {
-                console.error('Error loading profile:', error);
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'Gagal memuat data profil',
-                    icon: 'error',
-                    confirmButtonColor: '#5A7D7C'
-                });
-            }
-        }
-
-        async function handleProfileUpdate(e) {
-            e.preventDefault();
-            
-            const fullName = document.getElementById('full-name').value;
-            const phone = document.getElementById('phone').value;
-            const token = localStorage.getItem('access_token');
-
-            if (!token) {
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'Anda harus login terlebih dahulu',
-                    icon: 'error',
-                    confirmButtonColor: '#5A7D7C'
-                });
-                return;
-            }
-
-            try {
-                // Show loading
-                Swal.fire({
-                    title: 'Menyimpan...',
-                    text: 'Mohon tunggu sebentar',
-                    allowOutsideClick: false,
-                    showConfirmButton: false,
-                    willOpen: () => {
-                        Swal.showLoading();
-                    }
-                });
-
-                // Here you would implement the profile update API call
-                // For now, just update localStorage
-                const user = JSON.parse(localStorage.getItem('user'));
-                user.name = fullName;
-                localStorage.setItem('user', JSON.stringify(user));
-
-                // Update navbar
-                updateAuthSection();
-
-                Swal.fire({
-                    title: 'Berhasil!',
-                    text: 'Profil berhasil diperbarui',
-                    icon: 'success',
-                    confirmButtonColor: '#5A7D7C'
-                });
-
-            } catch (error) {
-                console.error('Error updating profile:', error);
-                Swal.fire({
-                    title: 'Error!',
-                    text: 'Gagal memperbarui profil',
-                    icon: 'error',
-                    confirmButtonColor: '#5A7D7C'
-                });
-            }
-        }
-
-        function initializeProfilePage() {
-            // Initialize Feather icons
-            feather.replace();
-            
-            // Initialize navbar scroll effect
-            window.addEventListener('scroll', () => {
-                const navbar = document.getElementById('navbar');
-                if (window.scrollY > 50) {
-                    navbar.classList.add('scrolled');
-                } else {
-                    navbar.classList.remove('scrolled');
-                }
-            });
-        }
-    </script>
+    <script src="../js/user-profile.js"></script>
 </body>
 </html>
