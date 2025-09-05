@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verifikasi Email | Si-Mbah</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="stylesheet" href="/css/auth.css">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    <div class="auth-container">
+        <div class="auth-header">
+            <div class="auth-logo">
+                <img src="/favicon.png" alt="Logo Si-Mbah">
+                <h1>Si-Mbah</h1>
+            </div>
+            <p class="auth-subtitle">Verifikasi Email</p>
+        </div>
+
+        <div class="auth-form">
+            <div id="alert" class="alert"></div>
+            
+            <div id="verification-status" class="verification-content">
+                <div class="loading-state">
+                    <div class="spinner"></div>
+                    <p>Memproses verifikasi email...</p>
+                </div>
+            </div>
+
+            <div class="verification-actions" id="verification-actions" style="display: none;">
+                <a href="/login.html" class="btn btn-primary">
+                    <i data-feather="log-in"></i>
+                    Lanjut ke Login
+                </a>
+                <a href="/index.html" class="btn" style="background: #f3f4f6; color: #374151; margin-top: 0.5rem;">
+                    <i data-feather="home"></i>
+                    Kembali ke Beranda
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .verification-content {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .loading-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .spinner {
+            width: 40px;
+            height: 40px;
+            border: 4px solid #f3f4f6;
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .success-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--success-green);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+        }
+
+        .error-icon {
+            width: 64px;
+            height: 64px;
+            background: var(--error-red);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2rem;
+            margin: 0 auto 1rem;
+        }
+
+        .verification-message {
+            margin: 1rem 0;
+            font-size: 1.1rem;
+            line-height: 1.5;
+        }
+
+        .verification-actions {
+            margin-top: 2rem;
+        }
+    </style>
+
+    <script>
+        // Initialize Feather Icons
+        feather.replace();
+
+        const alertDiv = document.getElementById("alert");
+        const verificationStatus = document.getElementById("verification-status");
+        const verificationActions = document.getElementById("verification-actions");
+
+        // Show alert function
+        function showAlert(message, type) {
+            alertDiv.textContent = message;
+            alertDiv.className = `alert ${type} show`;
+        }
+
+        function showVerificationResult(success, message) {
+            verificationStatus.innerHTML = `
+                <div class="${success ? 'success' : 'error'}-icon">
+                    <i data-feather="${success ? 'check' : 'x'}"></i>
+                </div>
+                <div class="verification-message">
+                    <h3>${success ? 'Email Terverifikasi!' : 'Verifikasi Gagal'}</h3>
+                    <p>${message}</p>
+                </div>
+            `;
+            
+            verificationActions.style.display = 'block';
+            feather.replace();
+        }
+
+        // Handle email verification
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = urlParams.get('access_token');
+            const type = urlParams.get('type');
+            const error = urlParams.get('error');
+            const errorDescription = urlParams.get('error_description');
+
+            // Check for errors first
+            if (error) {
+                showVerificationResult(false, errorDescription || 'Terjadi kesalahan saat verifikasi email.');
+                return;
+            }
+
+            // Check if this is a signup verification
+            if (type === 'signup' && accessToken) {
+                try {
+                    // Parse JWT token to get user data
+                    const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                    
+                    // Check if email is verified
+                    if (payload.user_metadata?.email_verified) {
+                        // Store user data for auto-login
+                        const userData = {
+                            id: payload.sub,
+                            email: payload.email,
+                            name: payload.user_metadata?.full_name || payload.email,
+                            avatar: payload.user_metadata?.avatar_url,
+                            provider: payload.app_metadata?.provider
+                        };
+                        
+                        localStorage.setItem('user', JSON.stringify(userData));
+                        localStorage.setItem('access_token', accessToken);
+                        
+                        showVerificationResult(true, 'Email Anda telah berhasil diverifikasi! Anda akan diarahkan ke halaman login.');
+                        
+                        // Auto redirect to login after 3 seconds
+                        setTimeout(() => {
+                            window.location.href = '/login.html';
+                        }, 3000);
+                    } else {
+                        showVerificationResult(false, 'Email belum terverifikasi. Silakan cek email Anda lagi.');
+                    }
+                } catch (error) {
+                    console.error('Error parsing token:', error);
+                    showVerificationResult(false, 'Token verifikasi tidak valid.');
+                }
+            } else if (accessToken) {
+                // Handle other types of verification
+                showVerificationResult(true, 'Verifikasi berhasil! Silakan login ke akun Anda.');
+                
+                // Auto redirect to login after 3 seconds
+                setTimeout(() => {
+                    window.location.href = '/login.html';
+                }, 3000);
+            } else {
+                showVerificationResult(false, 'Link verifikasi tidak valid atau sudah kedaluwarsa.');
+            }
+        });
+    </script>
+</body>
+</html>

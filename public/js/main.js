@@ -1,6 +1,9 @@
 document.addEventListener('DOMContentLoaded', () => {
     feather.replace();
 
+    // Authentication State Management
+    initializeAuth();
+
     // Elemen Chat
     const chatBubble = document.getElementById('chat-bubble');
     const chatWindow = document.getElementById('chat-window');
@@ -178,7 +181,7 @@ const loadConversation = () => {
                     <div class="sources-container hidden">
                         ${data.retrieved_docs.map(doc => `
                             <div class="doc-item">
-                                <a href="/documents/${doc.file}" 
+                                <a href="${doc.file_url || '#'}" 
                                 target="_blank" 
                                 rel="noopener noreferrer" 
                                 class="doc-title-link"
@@ -186,7 +189,11 @@ const loadConversation = () => {
                                 >
                                     ${doc.rank}. ${doc.title}
                                 </a>
-                                <p class="doc-meta">(Similarity: ${doc.similarity})</p>
+                                <p class="doc-meta">
+                                    ${doc.author ? `Penulis: ${doc.author}` : ''}
+                                    ${doc.year ? ` | Tahun: ${doc.year}` : ''}
+                                    ${doc.similarity ? ` | Similarity: ${doc.similarity}` : ''}
+                                </p>
                                 <p class="doc-snippet">"${doc.snippet}"</p>
                             </div>
                         `).join('')}
@@ -230,3 +237,404 @@ const loadConversation = () => {
     loadConversation();
     checkModelStatus();
 });
+
+// Authentication Management Functions
+function initializeAuth() {
+    // Check for authentication tokens in URL (for OAuth redirect)
+    checkUrlForTokens();
+    
+    // Update navbar based on auth state
+    updateNavbarAuth();
+    
+    // Setup auth event listeners
+    setupAuthEventListeners();
+    
+    // Check page access permissions
+    checkPageAccess();
+}
+
+function checkUrlForTokens() {
+    const urlParams = new URLSearchParams(window.location.hash.substring(1));
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
+    const type = urlParams.get('type');
+    
+    if (accessToken) {
+        try {
+            const payload = JSON.parse(atob(accessToken.split('.')[1]));
+            const userData = {
+                id: payload.sub,
+                email: payload.email,
+                name: payload.user_metadata?.full_name || payload.email,
+                avatar: payload.user_metadata?.avatar_url,
+                provider: payload.app_metadata?.provider
+            };
+            
+            localStorage.setItem('user', JSON.stringify(userData));
+            localStorage.setItem('access_token', accessToken);
+            
+            // Store refresh token if available
+            if (refreshToken) {
+                localStorage.setItem('refresh_token', refreshToken);
+            }
+            
+            // Clean URL
+            window.history.replaceState({}, document.title, window.location.pathname);
+            
+            // Update navbar
+            updateNavbarAuth();
+            
+            console.log('Authentication successful, user logged in');
+        } catch (error) {
+            console.error('Error parsing token:', error);
+        }
+    }
+}
+
+function updateNavbarAuth() {
+    const navbarExtra = document.querySelector('.navbar-extra');
+    if (!navbarExtra) return;
+    
+    // Find existing auth elements and remove them
+    const existingAuth = navbarExtra.querySelector('.login-btn, .user-profile');
+    if (existingAuth) {
+        existingAuth.remove();
+    }
+    
+    const user = getCurrentUser();
+    
+    if (user) {
+        // User is logged in - show profile
+        const userProfile = createUserProfile(user);
+        navbarExtra.insertBefore(userProfile, navbarExtra.firstChild);
+    } else {
+        // User is not logged in - show login button
+        const loginBtn = createLoginButton();
+        navbarExtra.insertBefore(loginBtn, navbarExtra.firstChild);
+    }
+    
+    // Re-initialize Feather icons
+    feather.replace();
+}
+
+function createLoginButton() {
+    const loginBtn = document.createElement('a');
+    loginBtn.href = '/login.html';
+    loginBtn.className = 'login-btn';
+    loginBtn.innerHTML = '<i data-feather="log-in"></i> Masuk';
+    return loginBtn;
+}
+
+function createUserProfile(user) {
+    const userProfile = document.createElement('div');
+    userProfile.className = 'user-profile';
+    
+    const avatar = user.avatar || '/favicon.png'; // fallback to site icon
+    const displayName = user.name || user.email;
+    
+    userProfile.innerHTML = `
+        <img src="${avatar}" alt="${displayName}" class="user-avatar" onerror="this.src='/favicon.png'">
+        <span class="user-name">${displayName}</span>
+        <i data-feather="chevron-down"></i>
+        <div class="user-dropdown">
+            <a href="#" class="dropdown-item" data-action="profile">
+                <i data-feather="user"></i>
+                Profil Saya
+            </a>
+            <a href="#" class="dropdown-item" data-action="settings">
+                <i data-feather="settings"></i>
+                Pengaturan
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item" data-action="logout">
+                <i data-feather="log-out"></i>
+                Keluar
+            </a>
+        </div>
+    `;
+    
+    return userProfile;
+}
+
+function setupAuthEventListeners() {
+    // Handle user profile dropdown
+    document.addEventListener('click', (e) => {
+        const userProfile = e.target.closest('.user-profile');
+        const dropdown = document.querySelector('.user-dropdown');
+        
+        if (userProfile && dropdown) {
+            e.preventDefault();
+            dropdown.classList.toggle('show');
+        } else if (dropdown && !dropdown.contains(e.target)) {
+            // Close dropdown when clicking outside
+            dropdown.classList.remove('show');
+        }
+        
+        // Handle dropdown actions
+        if (e.target.closest('.dropdown-item')) {
+            e.preventDefault();
+            const action = e.target.closest('.dropdown-item').dataset.action;
+            handleDropdownAction(action);
+        }
+    });
+}
+
+function handleDropdownAction(action) {
+    const dropdown = document.querySelector('.user-dropdown');
+    if (dropdown) {
+        dropdown.classList.remove('show');
+    }
+    
+    switch (action) {
+        case 'profile':
+            // Handle role-based profile routing
+            redirectToProfile();
+            break;
+        case 'settings':
+            // Handle role-based settings routing
+            redirectToSettings();
+            break;
+        case 'logout':
+            logout();
+            break;
+    }
+}
+
+// Role-based routing functions
+async function redirectToProfile() {
+    const user = getCurrentUser();
+    if (!user) {
+        window.location.href = '/login.html';
+        return;
+    }
+
+    // Fetch latest user data with role
+    try {
+        const userData = await fetchUserProfile();
+        if (userData && userData.role) {
+            const role = userData.role.toLowerCase();
+            if (role === 'admin') {
+                window.location.href = '/admin/profile.html';
+            } else {
+                window.location.href = '/user/profile.html';
+            }
+        } else {
+            // Default to user profile if role not found
+            window.location.href = '/user/profile.html';
+        }
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+        // Fallback to user profile
+        window.location.href = '/user/profile.html';
+    }
+}
+
+async function redirectToSettings() {
+    const user = getCurrentUser();
+    if (!user) {
+        window.location.href = '/login.html';
+        return;
+    }
+
+    // Fetch latest user data with role
+    try {
+        const userData = await fetchUserProfile();
+        if (userData && userData.role) {
+            const role = userData.role.toLowerCase();
+            if (role === 'admin') {
+                window.location.href = '/admin/settings.html';
+            } else {
+                window.location.href = '/user/settings.html';
+            }
+        } else {
+            // Default to user settings if role not found
+            window.location.href = '/user/settings.html';
+        }
+    } catch (error) {
+        console.error('Error fetching user profile:', error);
+        // Fallback to user settings
+        window.location.href = '/user/settings.html';
+    }
+}
+
+// Fetch user profile with role from API
+async function fetchUserProfile() {
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+        throw new Error('No access token');
+    }
+
+    const response = await fetch('/api/auth/profile', {
+        method: 'GET',
+        headers: {
+            'Authorization': `Bearer ${accessToken}`,
+            'Content-Type': 'application/json'
+        }
+    });
+
+    if (!response.ok) {
+        throw new Error('Failed to fetch user profile');
+    }
+
+    const data = await response.json();
+    
+    // Update stored user data with role
+    if (data.user) {
+        const currentUser = getCurrentUser();
+        const updatedUser = {
+            ...currentUser,
+            ...data.user
+        };
+        localStorage.setItem('user', JSON.stringify(updatedUser));
+        updateNavbarAuth(); // Update navbar with new user data
+    }
+    
+    return data.user;
+}
+
+// Page protection function
+function checkPageAccess() {
+    const currentPath = window.location.pathname;
+    const user = getCurrentUser();
+    
+    // If user is not logged in and trying to access protected pages
+    if (!user && (currentPath.includes('/user/') || currentPath.includes('/admin/'))) {
+        window.location.href = '/login.html';
+        return false;
+    }
+    
+    // If user is logged in, check role-based access
+    if (user) {
+        fetchUserProfile().then(userData => {
+            if (userData && userData.role) {
+                const userRole = userData.role.toLowerCase();
+                
+                // Admin trying to access user pages
+                if (userRole === 'admin' && currentPath.includes('/user/')) {
+                    window.location.href = currentPath.replace('/user/', '/admin/');
+                    return false;
+                }
+                
+                // User trying to access admin pages
+                if (userRole === 'user' && currentPath.includes('/admin/')) {
+                    Swal.fire({
+                        title: 'Akses Ditolak',
+                        text: 'Anda tidak memiliki izin untuk mengakses halaman admin.',
+                        icon: 'error',
+                        confirmButtonColor: '#5A7D7C',
+                        confirmButtonText: 'OK'
+                    }).then(() => {
+                        window.location.href = currentPath.replace('/admin/', '/user/');
+                    });
+                    return false;
+                }
+            }
+        }).catch(error => {
+            console.error('Error checking page access:', error);
+            // On error, redirect to login
+            window.location.href = '/login.html';
+        });
+    }
+    
+    return true;
+}
+
+function logout() {
+    // Show confirmation dialog
+    Swal.fire({
+        title: 'Keluar dari Akun?',
+        text: 'Anda yakin ingin keluar dari akun Anda?',
+        icon: 'question',
+        showCancelButton: true,
+        confirmButtonColor: '#5A7D7C',
+        cancelButtonColor: '#6b7280',
+        confirmButtonText: 'Ya, Keluar',
+        cancelButtonText: 'Batal',
+        reverseButtons: true
+    }).then((result) => {
+        if (result.isConfirmed) {
+            performLogout();
+        }
+    });
+}
+
+function performLogout() {
+    const accessToken = localStorage.getItem('access_token');
+    
+    // Show loading
+    Swal.fire({
+        title: 'Logging out...',
+        text: 'Sedang memproses logout',
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading();
+        }
+    });
+    
+    // Call logout API if we have a token
+    if (accessToken) {
+        fetch('/api/auth/logout', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${accessToken}`,
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                console.log('Server logout successful');
+            } else {
+                console.log('Server logout failed, continuing with client logout');
+            }
+        }).catch(error => {
+            console.log('Logout API error:', error);
+        }).finally(() => {
+            // Always perform client-side logout regardless of server response
+            performClientLogout();
+        });
+    } else {
+        // No token, just perform client-side logout
+        performClientLogout();
+    }
+}
+
+function performClientLogout() {
+    // Clear local storage
+    localStorage.removeItem('user');
+    localStorage.removeItem('access_token');
+    
+    // Clear any other auth-related data
+    localStorage.removeItem('refresh_token');
+    
+    // Update navbar
+    updateNavbarAuth();
+    
+    // Show success message
+    Swal.fire({
+        title: 'Logout Berhasil!',
+        text: 'Anda telah berhasil keluar dari akun',
+        icon: 'success',
+        confirmButtonColor: '#5A7D7C',
+        confirmButtonText: 'OK',
+        timer: 2000,
+        timerProgressBar: true
+    }).then(() => {
+        // Optional: redirect to home page if not already there
+        if (window.location.pathname !== '/index.html' && window.location.pathname !== '/') {
+            window.location.href = '/index.html';
+        }
+    });
+}
+
+function getCurrentUser() {
+    try {
+        const userStr = localStorage.getItem('user');
+        return userStr ? JSON.parse(userStr) : null;
+    } catch (error) {
+        console.error('Error parsing user data:', error);
+        return null;
+    }
+}
+
+function isAuthenticated() {
+    return getCurrentUser() !== null;
+}

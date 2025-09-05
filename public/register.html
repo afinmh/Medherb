@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar | Si-Mbah</title>
+    <link rel="icon" type="image/png" href="/favicon.png">
+
+    <!-- Arahkan ke file CSS baru -->
+    <link rel="stylesheet" href="/css/register.css"> 
+    
+    <!-- Link ke CSS AOS untuk animasi -->
+    <link rel="stylesheet" href="https://unpkg.com/aos@2.3.1/dist/aos.css">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://unpkg.com/feather-icons"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+</head>
+<body>
+    
+    <div class="auth-container" data-aos="fade-right" data-aos-duration="2000">
+        <a href="/index.html" class="back-link">
+            <i data-feather="arrow-left"></i>
+            Kembali
+        </a>
+        
+        <div class="auth-header">
+            <div class="auth-logo">
+                <img src="/favicon.png" alt="Logo Si-Mbah">
+                <h1>Si-Mbah</h1>
+            </div>
+            <p class="auth-subtitle">Bergabung dengan komunitas herbal</p>
+        </div>
+
+        <div class="auth-form">
+            <div id="alert" class="alert"></div>
+            
+            <form id="registerForm">
+                <div class="form-group">
+                    <label class="form-label" for="name">Nama Lengkap</label>
+                    <input type="text" id="name" name="name" class="form-input" required placeholder="Masukkan nama lengkap Anda">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="email">Email</label>
+                    <input type="email" id="email" name="email" class="form-input" required placeholder="Masukkan email Anda">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label" for="password">Password</label>
+                    <input type="password" id="password" name="password" class="form-input" required placeholder="Minimal 6 karakter" minlength="6">
+                </div>
+                
+                <button type="submit" class="btn btn-primary" id="registerBtn">
+                    <i data-feather="user-plus"></i>
+                    Daftar Sekarang
+                </button>
+            </form>
+
+            <div class="divider">
+                <span>atau</span>
+            </div>
+
+            <button id="googleLogin" class="btn btn-google">
+                <div class="google-icon"></div>
+                Daftar dengan Google
+            </button>
+        </div>
+
+        <div class="auth-footer">
+            <p>Sudah punya akun? <a href="/login.html">Masuk sekarang</a></p>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/aos@2.3.1/dist/aos.js"></script>
+
+    <script>
+        AOS.init();
+        // Initialize Feather Icons
+        feather.replace();
+
+        const form = document.getElementById("registerForm");
+        const registerBtn = document.getElementById("registerBtn");
+        const alertDiv = document.getElementById("alert");
+
+        // Show alert function
+        function showAlert(message, type) {
+            alertDiv.textContent = message;
+            alertDiv.className = `alert ${type} show`;
+            setTimeout(() => {
+                alertDiv.classList.remove("show");
+            }, 5000);
+        }
+
+        // Set loading state
+        function setLoading(isLoading) {
+            if (isLoading) {
+                registerBtn.classList.add("loading");
+                registerBtn.disabled = true;
+            } else {
+                registerBtn.classList.remove("loading");
+                registerBtn.disabled = false;
+            }
+        }
+
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+            setLoading(true);
+            
+            const formData = new FormData(form);
+            const payload = {
+                name: formData.get("name"),
+                email: formData.get("email"),
+                password: formData.get("password")
+            };
+
+            try {
+                const res = await fetch("/api/auth/register", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(payload)
+                });
+
+                const data = await res.json();
+                
+                if (res.ok) {
+                    // Show SweetAlert for email confirmation
+                    Swal.fire({
+                        title: 'Pendaftaran Berhasil!',
+                        html: `
+                            <div style="text-align: center;">
+                                <p style="margin-bottom: 1rem;">Akun Anda telah berhasil dibuat!</p>
+                                <p style="color: #666; font-size: 0.9rem;">
+                                    Silakan periksa email Anda di <strong>${payload.email}</strong> 
+                                    dan klik link konfirmasi untuk mengaktifkan akun.
+                                </p>
+                            </div>
+                        `,
+                        icon: 'success',
+                        confirmButtonText: 'Menuju Login',
+                        confirmButtonColor: '#5A7D7C',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        timer: null, // No auto-close
+                        customClass: {
+                            popup: 'swal-wide'
+                        }
+                    }).then(() => {
+                        // Redirect to login after user clicks OK
+                        window.location.href = "/login.html";
+                    });
+                } else {
+                    showAlert(data.error || "Terjadi kesalahan saat mendaftar", "error");
+                }
+            } catch (error) {
+                showAlert("Koneksi bermasalah. Silakan coba lagi.", "error");
+            } finally {
+                setLoading(false);
+            }
+        });
+
+        document.getElementById("googleLogin").addEventListener("click", async () => {
+            // redirect ke API Google OAuth
+            window.location.href = "/api/auth/google";
+        });
+
+        // Check for authentication tokens in URL (for OAuth redirect)
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.hash.substring(1));
+            const accessToken = urlParams.get('access_token');
+            const refreshToken = urlParams.get('refresh_token');
+            const type = urlParams.get('type');
+            
+            if (accessToken) {
+                // Parse JWT token to get user data
+                try {
+                    const payload = JSON.parse(atob(accessToken.split('.')[1]));
+                    const userData = {
+                        id: payload.sub,
+                        email: payload.email,
+                        name: payload.user_metadata?.full_name || payload.email,
+                        avatar: payload.user_metadata?.avatar_url,
+                        provider: payload.app_metadata?.provider
+                    };
+                    
+                    localStorage.setItem('user', JSON.stringify(userData));
+                    localStorage.setItem('access_token', accessToken);
+                    
+                    // Store refresh token if available
+                    if (refreshToken) {
+                        localStorage.setItem('refresh_token', refreshToken);
+                    }
+                    
+                    // Clean URL
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                    
+                    // Show success alert for OAuth registration
+                    Swal.fire({
+                        title: 'Pendaftaran Berhasil!',
+                        html: `
+                            <div style="text-align: center;">
+                                <p style="margin-bottom: 1rem;">Akun Anda telah berhasil dibuat dengan Google!</p>
+                                <p style="color: #666; font-size: 0.9rem;">
+                                    Selamat datang di Si-Mbah, <strong>${userData.name}</strong>!
+                                </p>
+                            </div>
+                        `,
+                        icon: 'success',
+                        confirmButtonText: 'Mulai Jelajahi',
+                        confirmButtonColor: '#5A7D7C',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        customClass: {
+                            popup: 'swal-wide'
+                        }
+                    }).then(() => {
+                        // Redirect to home after user clicks OK
+                        window.location.href = "/index.html";
+                    });
+                } catch (error) {
+                    console.error('Error parsing token:', error);
+                    showAlert("Token tidak valid", "error");
+                }
+            }
+        });
+    </script>
+</body>
+</html>

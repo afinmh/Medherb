@@ -149,19 +149,47 @@ export async function POST(req) {
     });
     if (error) throw new Error(`Supabase RPC error: ${error.message}`);
 
-    // --- PERBAIKAN 1: Proses data Supabase SATU KALI saja ---
-    // Kita buat satu variabel `docs` yang bersih dan lengkap.
-    const docs = (data || []).slice(0, 5).map((d, i) => {
+    // --- PERBAIKAN 1: Proses data Supabase dan dapatkan file_url dari jurnal_referensi ---
+    const docs = [];
+    for (let i = 0; i < Math.min((data || []).length, 5); i++) {
+      const d = data[i];
       const meta = safeJSON(d.metadata);
-      return {
+      
+      // Ambil file_url dari tabel jurnal_referensi berdasarkan judul
+      let fileUrl = null;
+      if (meta.title) {
+        try {
+          const { data: journalData, error: journalError } = await supabase
+            .from('jurnal_referensi')
+            .select('file_url')
+            .eq('judul', meta.title)
+            .single();
+          
+          if (!journalError && journalData?.file_url) {
+            fileUrl = journalData.file_url;
+          }
+        } catch (journalErr) {
+          console.log('Error fetching journal URL:', journalErr);
+        }
+      }
+      
+      // Fallback: buat URL dari prefix + title + .pdf
+      if (!fileUrl && meta.title) {
+        const encodedTitle = encodeURIComponent(meta.title);
+        fileUrl = `https://pwvgzpoxgnyvgedvwtgq.supabase.co/storage/v1/object/public/Jurnal/${encodedTitle}.pdf`;
+      }
+      
+      docs.push({
         rank: i + 1,
         title: meta.title || "Unknown Title",
-        file: meta.file || "unknown.pdf", // Ambil 'file' dari metadata! Ini yang terlewat.
+        author: meta.author || "Unknown Author",
+        year: meta.year || "Unknown Year",
+        file_url: fileUrl,
         similarity: typeof d.similarity === "number" ? d.similarity.toFixed(4) : "n/a",
         snippet: (d.content || "").slice(0, 200) + "...",
         content: d.content || "" // Simpan juga konten asli untuk 'context'
-      };
-    });
+      });
+    }
 
     // Buat 'context' dari variabel `docs` yang sudah kita proses.
     const context = docs
@@ -192,7 +220,7 @@ export async function POST(req) {
     }
     
     // --- PERBAIKAN 2: Gunakan `docs` yang sudah diproses untuk respons ---
-    // Kita tidak perlu memproses ulang, cukup hilangkan properti 'content' yang tidak perlu dikirim.
+    // Hilangkan properti 'content' yang tidak perlu dikirim ke frontend
     const retrieved_docs_for_frontend = docs.map(({ content, ...rest }) => rest);
 
     return NextResponse.json({
