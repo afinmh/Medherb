@@ -37,6 +37,10 @@
         <!-- Sidebar Menu -->
         <aside class="sidebar">
             <div>
+                <a class="sidebar-brand" href="../index.html">
+                    <i data-feather="arrow-left"></i>
+                    <span>Si-Mbah</span>
+                </a>
                 <div class="sidebar-user-info">
                     <div id="sidebar-avatar-container">
                         <div class="default-avatar">U</div>
@@ -52,10 +56,6 @@
                     <a class="nav-item" data-target="herbalku-section">
                         <i data-feather="book-open"></i>
                         <span>Herbalku</span>
-                    </a>
-                    <a class="nav-item" data-target="pengaturan-section">
-                        <i data-feather="settings"></i>
-                        <span>Pengaturan</span>
                     </a>
                 </nav>
             </div>
@@ -81,6 +81,22 @@
                 </div>
                 <form id="profile-form">
                     <div class="form-group">
+                        <label class="form-label">Foto Profil</label>
+                        <div style="display:flex; align-items:center; gap:1rem;">
+                            <div id="current-avatar" style="width:64px;height:64px;border-radius:50%;overflow:hidden;border:1px solid #e5e7eb;background:#fff;flex-shrink:0;">
+                                <img id="current-avatar-img" src="/favicon.png" alt="Avatar" style="width:100%;height:100%;object-fit:cover;">
+                            </div>
+                            <div>
+                                <input type="file" id="avatar-input" accept="image/*" style="display:none;" />
+                                <button type="button" id="btn-upload-avatar" class="btn-secondary-upload" style="display:inline-flex;align-items:center;gap:0.5rem;padding:0.55rem 1rem;border-radius:8px;border:1px solid #E5E7EB;background:#fff;color:#374151;">
+                                    <i data-feather="image" style="width:18px;height:18px;"></i>
+                                    <span>Ubah Foto</span>
+                                </button>
+                                <div class="help-text" style="margin-top:0.35rem;color:#6B7280;">PNG/JPG, maks 3MB</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
                         <label for="full-name" class="form-label">Nama Lengkap</label>
                         <input type="text" class="form-input" id="full-name" placeholder="Masukkan nama lengkap Anda">
                     </div>
@@ -88,10 +104,14 @@
                         <label for="email" class="form-label">Alamat Email</label>
                         <input type="email" class="form-input" id="email" readonly>
                     </div>
-                    <div class="form-group">
-                        <label for="phone" class="form-label">Nomor Telepon</label>
-                        <input type="tel" class="form-input" id="phone" placeholder="Contoh: 081234567890">
+                    <div class="form-group" id="password-hint" style="display:none; color:#B45309; background:#FFFBEB; border:1px solid #FDE68A; padding:0.75rem 1rem; border-radius:8px;">
+                        <i data-feather="alert-triangle" style="width:18px;height:18px;margin-right:6px;vertical-align:-3px;"></i>
+                        <span>Anda belum menyetel password untuk akun ini. Disarankan menyetel password agar bisa login tanpa Google.</span>
                     </div>
+                    <button type="button" class="btn-submit" id="btn-change-password" style="background:#374151;">
+                        <i data-feather="key"></i>
+                        <span id="btn-change-password-text">Ganti Password</span>
+                    </button>
                     <button type="submit" class="btn-submit">
                         <i data-feather="save"></i>
                         Simpan Perubahan
@@ -111,17 +131,7 @@
                 </div>
             </section>
 
-            <!-- Settings Section -->
-            <section id="pengaturan-section" class="content-section">
-                <div class="content-header">
-                    <h2>Pengaturan</h2>
-                </div>
-                <div class="placeholder-content">
-                    <i data-feather="settings"></i>
-                    <h3>Segera Hadir</h3>
-                    <p>Opsi pengaturan untuk akun Anda akan tersedia di sini di masa mendatang.</p>
-                </div>
-            </section>
+            <!-- Settings Section removed as requested -->
         </main>
     </div>
 

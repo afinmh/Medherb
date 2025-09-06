@@ -63,6 +63,18 @@ body {
     border-bottom: 1px solid var(--border-color);
 }
 
+.sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 1rem 1.25rem 0.5rem 1.25rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+}
+.sidebar-brand i { width: 18px; height: 18px; }
+.sidebar-brand:hover { color: var(--accent-primary); }
+
 .sidebar-avatar {
     width: 80px;
     height: 80px;
@@ -194,6 +206,13 @@ body {
     overflow-y: auto;
     scrollbar-width: thin;
     scrollbar-color: var(--accent-secondary) transparent;
+    /* Admin-like subtle grid background */
+    background-color: var(--bg-main);
+    background-image:
+        linear-gradient(rgba(0, 0, 0, 0.12) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0, 0, 0, 0.12) 1px, transparent 1px);
+    background-size: 18px 18px;
+    background-position: 0 0, 0 0;
 }
 
 /* Custom scrollbar for webkit browsers */
@@ -242,10 +261,10 @@ body {
 
 .content-section {
     display: none;
-    background: var(--bg-card);
+    background: rgba(255, 255, 255, 0.95);
     border-radius: var(--radius);
-    padding: 2.5rem;
-    box-shadow: var(--shadow-soft);
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
     border: 1px solid var(--border-color);
 }
 
@@ -321,6 +340,14 @@ body {
 .btn-submit:hover {
     opacity: 0.9;
     transform: translateY(-2px);
+}
+
+/* Subtle secondary upload button */
+.btn-secondary-upload:hover {
+    border-color: var(--accent-primary);
+    color: var(--accent-primary);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    transform: translateY(-1px);
 }
 
 /* Placeholder for other sections */

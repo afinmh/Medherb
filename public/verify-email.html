@@ -5,7 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verifikasi Email | Si-Mbah</title>
     <link rel="icon" type="image/png" href="/favicon.png">
-    <link rel="stylesheet" href="/css/auth.css">
+    <!-- Use same styles as login/register for visual parity -->
+    <link rel="stylesheet" href="/css/login.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://unpkg.com/feather-icons"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </head>
@@ -43,6 +47,14 @@
     </div>
 
     <style>
+        /* Center the auth card and add breathing space on all sides */
+        body { 
+            justify-content: center !important; 
+            align-items: center !important; 
+            padding: 1.25rem !important; 
+        }
+        /* Optional: neutral shadow when centered */
+        .auth-container { box-shadow: 0 10px 30px var(--shadow-soft); }
         .verification-content {
             text-align: center;
             padding: 2rem 0;
@@ -101,9 +113,7 @@
             line-height: 1.5;
         }
 
-        .verification-actions {
-            margin-top: 2rem;
-        }
+    .verification-actions { margin-top: 2rem; }
     </style>
 
     <script>

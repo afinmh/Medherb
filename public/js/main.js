@@ -267,6 +267,7 @@ function checkUrlForTokens() {
                 email: payload.email,
                 name: payload.user_metadata?.full_name || payload.email,
                 avatar: payload.user_metadata?.avatar_url,
+                avatar_url: payload.user_metadata?.avatar_url,
                 provider: payload.app_metadata?.provider
             };
             
@@ -317,6 +318,17 @@ function updateNavbarAuth() {
     feather.replace();
 }
 
+// Simple avatar cache helpers (data URL)
+function getCachedAvatar() {
+    try { return localStorage.getItem('avatar_data_url') || null; } catch { return null; }
+}
+function setCachedAvatar(dataUrl) {
+    try { if (dataUrl) localStorage.setItem('avatar_data_url', dataUrl); } catch {}
+}
+function clearCachedAvatar() {
+    try { localStorage.removeItem('avatar_data_url'); } catch {}
+}
+
 function createLoginButton() {
     const loginBtn = document.createElement('a');
     loginBtn.href = '/login.html';
@@ -329,21 +341,28 @@ function createUserProfile(user) {
     const userProfile = document.createElement('div');
     userProfile.className = 'user-profile';
     
-    const avatar = user.avatar || '/favicon.png'; // fallback to site icon
+    // Debug: print avatar sources
+    try {
+        const cached = getCachedAvatar();
+        console.debug('[Avatar][Navbar] sources:', {
+            cached: cached ? `data-url(${cached.length} chars)` : null,
+            user_avatar: user?.avatar || null,
+            user_avatar_url: user?.avatar_url || null,
+            user_picture: user?.picture || null
+        });
+    } catch {}
+
+    const avatar = getCachedAvatar() || user.avatar_url || user.avatar || user.picture || '/favicon.png'; // prefer DB avatar
     const displayName = user.name || user.email;
     
     userProfile.innerHTML = `
-        <img src="${avatar}" alt="${displayName}" class="user-avatar" onerror="this.src='/favicon.png'">
+    <img src="${avatar}" alt="${displayName}" class="user-avatar" onerror="this.src='/favicon.png'">
         <span class="user-name">${displayName}</span>
         <i data-feather="chevron-down"></i>
-        <div class="user-dropdown">
+    <div class="user-dropdown">
             <a href="#" class="dropdown-item" data-action="profile">
                 <i data-feather="user"></i>
                 Profil Saya
-            </a>
-            <a href="#" class="dropdown-item" data-action="settings">
-                <i data-feather="settings"></i>
-                Pengaturan
             </a>
             <div class="dropdown-divider"></div>
             <a href="#" class="dropdown-item" data-action="logout">
@@ -390,10 +409,6 @@ function handleDropdownAction(action) {
             // Handle role-based profile routing
             redirectToProfile();
             break;
-        case 'settings':
-            // Handle role-based settings routing
-            redirectToSettings();
-            break;
         case 'logout':
             logout();
             break;
@@ -429,33 +444,7 @@ async function redirectToProfile() {
     }
 }
 
-async function redirectToSettings() {
-    const user = getCurrentUser();
-    if (!user) {
-        window.location.href = '/login.html';
-        return;
-    }
-
-    // Fetch latest user data with role
-    try {
-        const userData = await fetchUserProfile();
-        if (userData && userData.role) {
-            const role = userData.role.toLowerCase();
-            if (role === 'admin') {
-                window.location.href = '/admin/settings.html';
-            } else {
-                window.location.href = '/user/settings.html';
-            }
-        } else {
-            // Default to user settings if role not found
-            window.location.href = '/user/settings.html';
-        }
-    } catch (error) {
-        console.error('Error fetching user profile:', error);
-        // Fallback to user settings
-        window.location.href = '/user/settings.html';
-    }
-}
+// redirectToSettings removed per request
 
 // Fetch user profile with role from API
 async function fetchUserProfile() {
@@ -477,6 +466,15 @@ async function fetchUserProfile() {
     }
 
     const data = await response.json();
+    // Debug: log API avatar payload
+    try {
+        console.debug('[Avatar][API] /api/auth/profile user:', {
+            avatar: data?.user?.avatar || null,
+            avatar_url: data?.user?.avatar_url || null,
+            name: data?.user?.name || null,
+            email: data?.user?.email || null
+        });
+    } catch {}
     
     // Update stored user data with role
     if (data.user) {
@@ -486,6 +484,27 @@ async function fetchUserProfile() {
             ...data.user
         };
         localStorage.setItem('user', JSON.stringify(updatedUser));
+        // Try caching avatar as data URL for reliable display
+    const avatarUrl = data.user.avatar_url || data.user.avatar || data.user.picture;
+        if (avatarUrl) {
+            try {
+                const r = await fetch(avatarUrl, { cache: 'no-store' });
+                if (r.ok) {
+                    const blob = await r.blob();
+                    // Only cache smallish images (< 2.5MB) to avoid exceeding quota
+                    if (blob.size < 2.5 * 1024 * 1024) {
+                        const reader = new FileReader();
+                        const p = new Promise(res => { reader.onloadend = () => res(reader.result); });
+                        reader.readAsDataURL(blob);
+                        const dataUrl = await p;
+            setCachedAvatar(dataUrl);
+            console.debug('[Avatar][Cache] cached data URL with size (chars):', dataUrl.length);
+                    }
+                }
+            } catch (e) {
+        console.debug('[Avatar][Cache] failed to cache avatar:', e?.message || e);
+            }
+        }
         updateNavbarAuth(); // Update navbar with new user data
     }
     
@@ -604,6 +623,7 @@ function performClientLogout() {
     
     // Clear any other auth-related data
     localStorage.removeItem('refresh_token');
+    clearCachedAvatar();
     
     // Update navbar
     updateNavbarAuth();

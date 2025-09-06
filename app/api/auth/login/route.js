@@ -28,7 +28,7 @@ export async function POST(request) {
   // Get user profile with role from users table
   const { data: profile, error: profileError } = await supabase
     .from('users')
-    .select('role, name')
+    .select('role, name, avatar_url')
     .eq('id', data.user.id)
     .single();
 
@@ -46,7 +46,7 @@ export async function POST(request) {
           is_verified: true
         }
       ])
-      .select('role, name')
+  .select('role, name, avatar_url')
       .single();
 
     if (createError) {
@@ -59,7 +59,9 @@ export async function POST(request) {
         user: {
           ...data.user,
           role: newProfile?.role || 'user',
-          profile: newProfile
+          profile: newProfile,
+          avatar: data.user.user_metadata?.avatar_url || newProfile?.avatar_url || null,
+          avatar_url: newProfile?.avatar_url || data.user.user_metadata?.avatar_url || null,
         },
         session: data.session 
       },
@@ -73,7 +75,9 @@ export async function POST(request) {
       user: {
         ...data.user,
         role: profile.role,
-        profile: profile
+        profile: profile,
+        avatar: data.user.user_metadata?.avatar_url || profile?.avatar_url || null,
+        avatar_url: profile?.avatar_url || data.user.user_metadata?.avatar_url || null,
       },
       session: data.session 
     },
