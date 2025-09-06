@@ -20,7 +20,7 @@
     state.page = page;
     const tbody = document.getElementById('refs-tbody');
     const pager = document.getElementById('refs-pagination');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="5">Memuat...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr><td colspan="5">Memuat...</td></tr>';
     if (pager) pager.innerHTML = '';
 
     const controller = new AbortController();
@@ -63,6 +63,17 @@
           </a>
         </td>
         <td>
+          ${d.is_processed ? `
+            <span class="btn-processed" title="Selesai diproses">
+              <i data-feather="check-circle"></i>
+              <span>Proses</span>
+            </span>
+          ` : `
+            <button class="btn-process" data-process title="Proses sekarang">
+              <i data-feather="loader"></i>
+              <span>Proses</span>
+            </button>
+          `}
           <button class="btn-icon" data-edit><i data-feather="edit-2"></i></button>
           <button class="btn-icon danger" data-delete><i data-feather="trash-2"></i></button>
         </td>
@@ -72,6 +83,7 @@
 
     tbody.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', onEdit));
     tbody.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', onDelete));
+    tbody.querySelectorAll('[data-process]').forEach(btn => btn.addEventListener('click', onProcess));
   }
 
   function renderPagination(){
@@ -241,6 +253,58 @@
         .then(() => { Swal.fire('Terhapus','Referensi dihapus.','success'); loadPage(1); })
         .catch(() => Swal.fire('Error','Gagal menghapus.','error'));
     });
+  }
+
+  // Proses dokumen: panggil endpoint pembersihan lalu tandai sebagai processed
+  function onProcess(e){
+    const btn = e.currentTarget;
+    const tr = btn.closest('tr');
+    const id = tr?.getAttribute('data-id');
+    if (!id) return;
+
+    const originalHTML = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i data-feather="loader"></i><span>Memproses...</span>';
+    feather.replace({ elements: [btn] });
+
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 60000);
+
+  fetch(`/api/documents/${id}/process`, { method: 'POST', signal: controller.signal })
+      .then(async res => {
+        clearTimeout(timeout);
+        if (!res.ok) throw new Error('HTTP '+res.status);
+        return res.json();
+      })
+      .then(data => {
+    console.log('[Process][Client] metadata:', data?.metadata, 'chunks:', data?.chunk_count, 'length:', data?.length);
+        // Tandai processed di DB
+        return fetch(`/api/documents/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ is_processed: true })
+        });
+      })
+      .then(async res => {
+        if (!res.ok) throw new Error('PATCH HTTP '+res.status);
+        return res.json();
+      })
+      .then(() => {
+        const badge = document.createElement('span');
+        badge.className = 'btn-processed';
+        badge.title = 'Selesai diproses';
+        badge.innerHTML = '<i data-feather="check-circle"></i><span>Proses</span>';
+        btn.replaceWith(badge);
+        feather.replace({ elements: [badge] });
+        Swal.fire('Selesai', 'Dokumen berhasil dibersihkan.', 'success');
+      })
+      .catch(err => {
+        console.error('Gagal memproses dokumen:', err);
+        Swal.fire('Error', 'Gagal memproses dokumen.', 'error');
+        btn.disabled = false;
+        btn.innerHTML = originalHTML;
+        feather.replace({ elements: [btn] });
+      });
   }
 
   function toIntOrNull(v){

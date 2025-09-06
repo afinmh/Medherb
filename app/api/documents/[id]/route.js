@@ -7,9 +7,9 @@ function sb() {
   return createClient(process.env.SUPABASE_URL, key);
 }
 
-export async function GET(request, { params }) {
+export async function GET(request, ctx) {
   try {
-    const { id } = params;
+  const { id } = await ctx.params;
     const { data, error } = await sb()
       .from('jurnal_referensi')
       .select('*')
@@ -24,9 +24,9 @@ export async function GET(request, { params }) {
   }
 }
 
-export async function PATCH(request, { params }) {
+export async function PATCH(request, ctx) {
   try {
-    const { id } = params;
+  const { id } = await ctx.params;
     const payload = await request.json();
     // sanitize fields
     const updates = {};
@@ -34,6 +34,7 @@ export async function PATCH(request, { params }) {
     if (typeof payload.penulis === 'string' || payload.penulis === null) updates.penulis = payload.penulis;
     if (typeof payload.tahun === 'number' || payload.tahun === null) updates.tahun = payload.tahun;
     if (typeof payload.file_url === 'string') updates.file_url = payload.file_url;
+  if (typeof payload.is_processed === 'boolean') updates.is_processed = payload.is_processed;
 
     const { data, error } = await sb()
       .from('jurnal_referensi')
@@ -49,10 +50,10 @@ export async function PATCH(request, { params }) {
   }
 }
 
-export async function DELETE(request, { params }) {
+export async function DELETE(request, ctx) {
   try {
     const client = sb();
-    const { id } = params;
+  const { id } = await ctx.params;
 
     // 1) Get record to read file_url
     const { data: doc, error: getErr } = await client

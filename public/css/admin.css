@@ -599,12 +599,12 @@ body {
 /* Subtle zebra striping for readability */
 .table tbody tr:nth-child(even) td { background: rgba(0, 0, 0, 0.01); }
 
-/* Column widths and truncation */
-.table th:nth-child(1), .table td:nth-child(1) { width: 45%; }
-.table th:nth-child(2), .table td:nth-child(2) { width: 28%; }
-.table th:nth-child(3), .table td:nth-child(3) { width: 10%; }
-.table th:nth-child(4), .table td:nth-child(4) { width: 10%; }
-.table th:nth-child(5), .table td:nth-child(5) { width: 7%; }
+/* Column widths and truncation (5 columns: Judul, Penulis, Tahun, File, Aksi) */
+.table th:nth-child(1), .table td:nth-child(1) { width: 38%; } /* Judul */
+.table th:nth-child(2), .table td:nth-child(2) { width: 27%; } /* Penulis */
+.table th:nth-child(3), .table td:nth-child(3) { width: 10%; } /* Tahun */
+.table th:nth-child(4), .table td:nth-child(4) { width: 10%; } /* File */
+.table th:nth-child(5), .table td:nth-child(5) { width: 15%; } /* Aksi (process+edit+delete) */
 
 .table td:nth-child(1),
 .table td:nth-child(2) {
@@ -665,6 +665,26 @@ body {
     transform: translateY(-1px);
 }
 .btn-icon.danger:hover { color: #E53E3E; border-color: #E53E3E; }
+
+/* Process column styles */
+.btn-process {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .35rem .6rem; border-radius: 8px;
+    border: 1px solid #FCD34D; background: #FEF3C7; color: #92400E;
+    font-size: .85rem; cursor: pointer;
+}
+.btn-process i { width: 16px; height: 16px; }
+.btn-process:hover { background: #FDE68A; }
+.status-check { display: inline-flex; align-items:center; color: #16A34A; }
+.status-check i { width: 18px; height: 18px; }
+
+.btn-processed {
+    display: inline-flex; align-items: center; gap: .35rem;
+    padding: .35rem .6rem; border-radius: 8px;
+    border: 1px solid #86EFAC; background: #ECFDF5; color: #047857;
+    font-size: .85rem;
+}
+.btn-processed i { width: 16px; height: 16px; }
 
 .btn-primary, .btn-secondary {
     border: none; cursor: pointer; font-weight: 600;
