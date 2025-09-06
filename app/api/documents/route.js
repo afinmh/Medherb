@@ -9,7 +9,7 @@ export async function GET(request) {
   try {
     const supabase = createClient(
       process.env.SUPABASE_URL,
-      process.env.SUPABASE_KEY
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY
     );
 
     // Get query parameters for pagination
@@ -64,5 +64,42 @@ export async function GET(request) {
       { error: 'Gagal memuat daftar dokumen dari database.' },
       { status: 500 }
     );
+  }
+}
+
+/**
+ * Handler untuk metode POST pada /api/documents
+ * Membuat entri baru pada tabel jurnal_referensi
+ */
+export async function POST(request) {
+  try {
+    const supabase = createClient(
+      process.env.SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY
+    );
+
+    const body = await request.json();
+    const payload = {
+      judul: String(body?.judul || '').trim(),
+      penulis: body?.penulis ? String(body.penulis).trim() : null,
+      tahun: typeof body?.tahun === 'number' ? body.tahun : (isNaN(parseInt(body?.tahun)) ? null : parseInt(body.tahun)),
+      file_url: String(body?.file_url || '').trim()
+    };
+
+    if (!payload.judul || !payload.file_url) {
+      return NextResponse.json({ error: 'Judul dan file_url wajib diisi' }, { status: 400 });
+    }
+
+    const { data, error } = await supabase
+      .from('jurnal_referensi')
+      .insert(payload)
+      .select('*')
+      .single();
+
+    if (error) throw new Error(error.message);
+    return NextResponse.json({ document: data }, { status: 201 });
+  } catch (error) {
+    console.error('Gagal membuat dokumen:', error);
+    return NextResponse.json({ error: 'Gagal membuat dokumen.' }, { status: 500 });
   }
 }

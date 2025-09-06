@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Referensi - Admin</title>
+  <link rel="icon" type="image/png" href="../favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="../css/admin.css" />
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-header">
+          <a href="../index.html" class="sidebar-logo">
+            <img src="../favicon.png" alt="Si-Mbah Logo">
+            <span>Si-Mbah</span>
+          </a>
+        </div>
+        <nav class="sidebar-nav">
+          <a href="./profile.html" class="nav-item">
+            <i data-feather="layout"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="./user.html" class="nav-item">
+            <i data-feather="users"></i>
+            <span>Pengguna</span>
+          </a>
+          <a href="#" class="nav-item">
+            <i data-feather="book-open"></i>
+            <span>Herbalpedia</span>
+          </a>
+          <a href="#" class="nav-item active">
+            <i data-feather="file-text"></i>
+            <span>Referensi</span>
+          </a>
+        </nav>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="user-profile">
+          <div id="admin-avatar-sidebar" class="profile-avatar"></div>
+          <div class="profile-info">
+            <span id="admin-name-sidebar" class="profile-name">Loading...</span>
+            <span class="profile-role">Admin</span>
+          </div>
+        </div>
+        <button class="btn-logout">
+          <i data-feather="log-out"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header">
+        <button class="sidebar-toggle" id="sidebar-toggle">
+          <i data-feather="menu"></i>
+        </button>
+      </header>
+
+      <div class="page-content">
+        <div class="welcome-header">
+          <div class="welcome-row">
+            <h1>Referensi Jurnal</h1>
+            <button class="btn-primary" id="add-ref">
+              <i data-feather="plus"></i>
+              <span>Tambah Referensi</span>
+            </button>
+          </div>
+         </div>
+
+  <section class="card">
+          <div class="table-responsive">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Judul</th>
+                  <th>Penulis</th>
+                  <th>Tahun</th>
+                  <th>File</th>
+                  <th style="width:120px">Aksi</th>
+                </tr>
+              </thead>
+              <tbody id="refs-tbody">
+                <tr><td colspan="5">Memuat...</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination" id="refs-pagination"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div class="modal" id="create-modal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Tambah Referensi</h3>
+        <button class="modal-close" data-close>
+          <i data-feather="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="create-form">
+          <div class="form-group">
+            <label for="create-judul">Judul</label>
+            <input type="text" id="create-judul" required />
+          </div>
+          <div class="form-group">
+            <label for="create-penulis">Penulis</label>
+            <input type="text" id="create-penulis" />
+          </div>
+          <div class="form-group">
+            <label for="create-tahun">Tahun</label>
+            <input type="number" id="create-tahun" min="0" />
+          </div>
+          <div class="form-group">
+            <label for="create-file">File PDF</label>
+            <input type="file" id="create-file" accept="application/pdf" required />
+            <small class="help-text">File akan diunggah dan dinamai sesuai judul, contoh: Judul → Judul.pdf</small>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-close>Batal</button>
+        <button class="btn-primary" id="save-create">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal" id="edit-modal" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-header">
+        <h3>Edit Referensi</h3>
+        <button class="modal-close" data-close>
+          <i data-feather="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="edit-form">
+          <input type="hidden" id="edit-id" />
+          <div class="form-group">
+            <label for="edit-judul">Judul</label>
+            <input type="text" id="edit-judul" required />
+          </div>
+          <div class="form-group">
+            <label for="edit-penulis">Penulis</label>
+            <input type="text" id="edit-penulis" />
+          </div>
+          <div class="form-group">
+            <label for="edit-tahun">Tahun</label>
+            <input type="number" id="edit-tahun" min="0" />
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-close>Batal</button>
+        <button class="btn-primary" id="save-edit">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/admin.js"></script>
+  <script src="../js/referensi.js"></script>
+</body>
+</html>

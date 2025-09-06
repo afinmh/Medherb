@@ -17,6 +17,9 @@
 </head>
 <body>
     <div class="admin-layout">
+        <!-- Mobile sidebar overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay"></div>
+        
         <aside class="sidebar" id="sidebar">
             <div class="sidebar-top">
                 <div class="sidebar-header">
@@ -30,11 +33,15 @@
                         <i data-feather="layout"></i>
                         <span>Dashboard</span>
                     </a>
+                    <a href="./user.html" class="nav-item">
+                        <i data-feather="users"></i>
+                        <span>Pengguna</span>
+                    </a>
                     <a href="#" class="nav-item">
                         <i data-feather="book-open"></i>
                         <span>Herbalpedia</span>
                     </a>
-                    <a href="#" class="nav-item">
+                    <a href="./referensi.html" class="nav-item">
                         <i data-feather="file-text"></i>
                         <span>Referensi</span>
                     </a>
@@ -60,9 +67,6 @@
                 <button class="sidebar-toggle" id="sidebar-toggle">
                     <i data-feather="menu"></i>
                 </button>
-                <div class="header-actions">
-                    <button class="action-button"><i data-feather="bell"></i></button>
-                </div>
             </header>
 
             <div class="page-content">
@@ -100,11 +104,32 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- Recent Activity -->
+                <section class="recent-activity">
+                    <h2 class="section-title">Aktivitas Terbaru</h2>
+                    <ul class="activity-list">
+                        <li class="activity-item">
+                            <i data-feather="user-plus"></i>
+                            <span class="activity-text">Pengguna John Doe baru saja mendaftar.</span>
+                            <span class="activity-time">5 menit yang lalu</span>
+                        </li>
+                        <li class="activity-item">
+                            <i data-feather="feather"></i>
+                            <span class="activity-text">Tanaman herbal Kunyit baru saja ditambahkan.</span>
+                            <span class="activity-time">12 menit yang lalu</span>
+                        </li>
+                        <li class="activity-item">
+                            <i data-feather="book-open"></i>
+                            <span class="activity-text">Jurnal baru 'Manfaat Jahe Merah' telah dipublikasikan.</span>
+                            <span class="activity-time">25 menit yang lalu</span>
+                        </li>
+                    </ul>
+                </section>
             </div>
         </main>
     </div>
 
-    <script src="httpshttps://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="../js/admin.js"></script>
 </body>
 </html>
