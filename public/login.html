@@ -140,6 +140,10 @@
                     if (data.session?.access_token) {
                         localStorage.setItem('access_token', data.session.access_token);
                     }
+                    // Store refresh token as well for auto-refresh
+                    if (data.session?.refresh_token) {
+                        localStorage.setItem('refresh_token', data.session.refresh_token);
+                    }
                     
                     Swal.fire({
                         icon: 'success',

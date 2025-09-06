@@ -243,6 +243,9 @@ function initializeAuth() {
     // Check for authentication tokens in URL (for OAuth redirect)
     checkUrlForTokens();
     
+    // Attempt to refresh token if expired/near expiry
+    maybeRefreshSession().catch(() => {/* noop */});
+
     // Update navbar based on auth state
     updateNavbarAuth();
     
@@ -448,9 +451,12 @@ async function redirectToProfile() {
 
 // Fetch user profile with role from API
 async function fetchUserProfile() {
-    const accessToken = localStorage.getItem('access_token');
+    let accessToken = localStorage.getItem('access_token');
     if (!accessToken) {
-        throw new Error('No access token');
+        // Try refresh if we have a refresh token
+        await maybeRefreshSession();
+        accessToken = localStorage.getItem('access_token');
+        if (!accessToken) throw new Error('No access token');
     }
 
     const response = await fetch('/api/auth/profile', {
@@ -462,6 +468,57 @@ async function fetchUserProfile() {
     });
 
     if (!response.ok) {
+        // If unauthorized, try refresh once then retry
+        if (response.status === 401) {
+            await maybeRefreshSession();
+            const at2 = localStorage.getItem('access_token');
+            if (!at2) throw new Error('Failed to refresh session');
+            const retry = await fetch('/api/auth/profile', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${at2}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!retry.ok) throw new Error('Failed to fetch user profile');
+            const dataRetry = await retry.json();
+            // continue below with standard update flow
+            const data = dataRetry;
+            try {
+                console.debug('[Avatar][API] /api/auth/profile user:', {
+                    avatar: data?.user?.avatar || null,
+                    avatar_url: data?.user?.avatar_url || null,
+                    name: data?.user?.name || null,
+                    email: data?.user?.email || null
+                });
+            } catch {}
+            if (data.user) {
+                const currentUser = getCurrentUser();
+                const updatedUser = { ...currentUser, ...data.user };
+                localStorage.setItem('user', JSON.stringify(updatedUser));
+                const avatarUrl = data.user.avatar_url || data.user.avatar || data.user.picture;
+                if (avatarUrl) {
+                    try {
+                        const r = await fetch(avatarUrl, { cache: 'no-store' });
+                        if (r.ok) {
+                            const blob = await r.blob();
+                            if (blob.size < 2.5 * 1024 * 1024) {
+                                const reader = new FileReader();
+                                const p = new Promise(res => { reader.onloadend = () => res(reader.result); });
+                                reader.readAsDataURL(blob);
+                                const dataUrl = await p;
+                                setCachedAvatar(dataUrl);
+                                console.debug('[Avatar][Cache] cached data URL with size (chars):', dataUrl.length);
+                            }
+                        }
+                    } catch (e) {
+                        console.debug('[Avatar][Cache] failed to cache avatar:', e?.message || e);
+                    }
+                }
+                updateNavbarAuth();
+            }
+            return dataRetry.user;
+        }
         throw new Error('Failed to fetch user profile');
     }
 
@@ -657,4 +714,51 @@ function getCurrentUser() {
 
 function isAuthenticated() {
     return getCurrentUser() !== null;
+}
+
+// --- Minimal token refresh helpers ---
+function decodeJwt(token) {
+    try {
+        const payload = token.split('.')[1];
+        return JSON.parse(atob(payload));
+    } catch { return null; }
+}
+
+function isAccessTokenExpiringSoon(token, skewSeconds = 60) {
+    const p = decodeJwt(token);
+    if (!p?.exp) return false;
+    const now = Math.floor(Date.now() / 1000);
+    return p.exp - now <= skewSeconds;
+}
+
+async function maybeRefreshSession() {
+    const at = localStorage.getItem('access_token');
+    const rt = localStorage.getItem('refresh_token');
+    if (!rt) return; // nothing to do
+
+    // Refresh if no access token or expiring soon/expired
+    if (!at || isAccessTokenExpiringSoon(at, 60)) {
+        try {
+            const res = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ refresh_token: rt })
+            });
+            if (!res.ok) {
+                // If refresh fails, clear tokens to force re-login later
+                localStorage.removeItem('access_token');
+                // keep refresh token; user might still try again after navigation
+                return;
+            }
+            const data = await res.json();
+            if (data?.session?.access_token) {
+                localStorage.setItem('access_token', data.session.access_token);
+            }
+            if (data?.session?.refresh_token) {
+                localStorage.setItem('refresh_token', data.session.refresh_token);
+            }
+        } catch (e) {
+            // network issues; ignore
+        }
+    }
 }
