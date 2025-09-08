@@ -8,8 +8,12 @@ function sb() {
 
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
-    const { data, error } = await sb().from('users').select('*').eq('id', id).single();
+  const { id } = await params;
+    const { data, error } = await sb()
+      .from('users')
+      .select('id,name,email,role,created_at,is_verified,password_set,avatar_url')
+      .eq('id', id)
+      .single();
     if (error) throw new Error(error.message);
     if (!data) return NextResponse.json({ error: 'Not found' }, { status: 404 });
     return NextResponse.json({ user: data });
@@ -21,7 +25,7 @@ export async function GET(request, { params }) {
 
 export async function PATCH(request, { params }) {
   try {
-    const { id } = params;
+  const { id } = await params;
     const body = await request.json();
     const client = sb();
 
@@ -57,7 +61,7 @@ export async function PATCH(request, { params }) {
 export async function DELETE(request, { params }) {
   try {
     const client = sb();
-    const { id } = params;
+  const { id } = await params;
     // Prefer deleting auth user so it cascades to users table
     const { error: derr } = await client.auth.admin.deleteUser(id);
     if (derr) {

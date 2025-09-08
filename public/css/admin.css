@@ -371,8 +371,23 @@ body {
     line-height: 1.2;
 }
 
+/* Global overlay for mobile sidebar (works consistently across pages) */
+.sidebar-overlay {
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 999;
+    opacity: 0; visibility: hidden;
+    transition: all 0.3s ease;
+}
+.sidebar-overlay.show { opacity: 1; visibility: visible; }
+
 /* Responsive */
 @media (max-width: 768px) {
+    /* Modal responsive improvements */
+    .modal { padding: 0.75rem; }
+    .modal-dialog { max-width: 100%; border-radius: 12px; }
+
     .sidebar {
         position: fixed; 
         left: 0; 
@@ -388,23 +403,7 @@ body {
         transform: translateX(0);
     }
     
-    /* Overlay untuk mobile sidebar */
-    .sidebar-overlay {
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.5);
-        z-index: 999;
-        opacity: 0;
-        visibility: hidden;
-        transition: all 0.3s ease;
-    }
-    .sidebar-overlay.show {
-        opacity: 1;
-        visibility: visible;
-    }
+    /* Overlay styles moved to global scope for consistency */
     
     .sidebar-toggle {
         display: flex;
@@ -563,6 +562,11 @@ body {
     padding: 1.25rem;
 }
 
+/* Generic grid reused by pages (users/referensi/herbal) */
+.cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 1024px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px)  { .cards-grid { grid-template-columns: 1fr; } }
+
 .card-actions {
     display: flex;
     justify-content: flex-end;
@@ -575,52 +579,7 @@ body {
 }
 .card-actions .btn-primary i { width: 18px; height: 18px; }
 
-.table-responsive { width: 100%; overflow-x: auto; }
-.table {
-    width: 100%;
-    border-collapse: separate;
-    border-spacing: 0;
-    table-layout: fixed; /* enable ellipsis */
-}
-.table th, .table td {
-    padding: 0.65rem 0.75rem;
-    border-bottom: 1px solid var(--border-color);
-    text-align: left;
-    font-size: 0.95rem;
-    vertical-align: middle;
-}
-.table thead th {
-    color: var(--text-secondary);
-    font-weight: 600;
-    background: rgba(0, 0, 0, 0.02);
-}
-.table tbody tr:hover td { background: rgba(74, 108, 106, 0.04); }
-
-/* Subtle zebra striping for readability */
-.table tbody tr:nth-child(even) td { background: rgba(0, 0, 0, 0.01); }
-
-/* Column widths and truncation (5 columns: Judul, Penulis, Tahun, File, Aksi) */
-.table th:nth-child(1), .table td:nth-child(1) { width: 38%; } /* Judul */
-.table th:nth-child(2), .table td:nth-child(2) { width: 27%; } /* Penulis */
-.table th:nth-child(3), .table td:nth-child(3) { width: 10%; } /* Tahun */
-.table th:nth-child(4), .table td:nth-child(4) { width: 10%; } /* File */
-.table th:nth-child(5), .table td:nth-child(5) { width: 15%; } /* Aksi (process+edit+delete) */
-
-.table td:nth-child(1),
-.table td:nth-child(2) {
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis; /* show dots for long text */
-}
-
-/* Users table specific columns */
-.users-table th:nth-child(1), .users-table td:nth-child(1) { width: 18%; }
-.users-table th:nth-child(2), .users-table td:nth-child(2) { width: 22%; }
-.users-table th:nth-child(3), .users-table td:nth-child(3) { width: 12%; }
-.users-table th:nth-child(4), .users-table td:nth-child(4) { width: 10%; }
-.users-table th:nth-child(5), .users-table td:nth-child(5) { width: 12%; }
-.users-table th:nth-child(6), .users-table td:nth-child(6) { width: 16%; }
-.users-table th:nth-child(7), .users-table td:nth-child(7) { width: 10%; }
+/* Table styles removed (not used); keep helper for legacy if any */
 .text-ellipsis { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
 /* PDF link styling */
@@ -723,7 +682,7 @@ body {
     position: fixed; inset: 0; z-index: 2000;
     background: rgba(0,0,0,0.4);
     display: none; align-items: center; justify-content: center;
-    padding: 1rem;
+    padding: 1rem; overflow-y: auto; /* allow scroll on small screens */
 }
 .modal.show { display: flex; }
 .modal-dialog {
@@ -732,8 +691,11 @@ body {
     border: 1px solid var(--border-color);
     border-radius: 14px;
     box-shadow: 0 20px 60px rgba(0,0,0,0.12);
-    overflow: hidden;
+    overflow: hidden; /* keep rounded corners */
+    max-height: calc(100vh - 2rem); /* fit within viewport */
+    display: flex; flex-direction: column; /* so body can scroll */
 }
+.modal-dialog.herb-modal { max-width: 980px; }
 .modal-header, .modal-footer {
     display: flex; align-items: center; justify-content: space-between;
     padding: 1rem 1.25rem;
@@ -742,7 +704,7 @@ body {
 .modal-header { border-bottom: 1px solid var(--border-color); }
 .modal-footer { border-top: 1px solid var(--border-color); }
 .modal-header h3 { font-size: 1.25rem; font-weight: 700; }
-.modal-body { padding: 1rem 1.25rem; }
+.modal-body { padding: 1rem 1.25rem; overflow-y: auto; -webkit-overflow-scrolling: touch; }
 .modal-close { background: transparent; border: none; cursor: pointer; color: var(--text-secondary); }
 
 .form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 0.85rem; }
@@ -765,3 +727,20 @@ body {
 
 /* Modal footer buttons layout */
 .modal-footer { gap: 0.5rem; justify-content: flex-end; }
+
+/* Minimal buttons for modal footer */
+.modal-footer .btn-primary, .modal-footer .btn-secondary {
+    border-radius: 12px;
+    padding: 0.6rem 1rem;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
+.modal-footer .btn-primary { filter: none; }
+.modal-footer .btn-primary:hover { transform: translateY(-1px); }
+.modal-footer .btn-secondary:hover { transform: translateY(-1px); }
+
+/* Generic spinner animation for inline loaders */
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.spin { animation: spin 1s linear infinite; display: inline-block; }
+.spinner { width: 16px; height: 16px; border: 2px solid rgba(0,0,0,0.2); border-top-color: rgba(0,0,0,0.6); border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }

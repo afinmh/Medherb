@@ -26,7 +26,7 @@ export async function GET(request, ctx) {
 
 export async function PATCH(request, ctx) {
   try {
-  const { id } = await ctx.params;
+    const { id } = await ctx.params;
     const payload = await request.json();
     // sanitize fields
     const updates = {};
@@ -36,13 +36,52 @@ export async function PATCH(request, ctx) {
     if (typeof payload.file_url === 'string') updates.file_url = payload.file_url;
   if (typeof payload.is_processed === 'boolean') updates.is_processed = payload.is_processed;
 
-    const { data, error } = await sb()
+    const client = sb();
+    const { data, error } = await client
       .from('jurnal_referensi')
       .update(updates)
       .eq('id', id)
       .select('*')
       .single();
     if (error) throw new Error(error.message);
+
+    // If title/author/year changed, propagate to all related vector chunks' metadata
+    const metaPatch = {};
+    if (Object.prototype.hasOwnProperty.call(updates, 'judul')) {
+      metaPatch.title = updates.judul ?? '';
+    }
+    if (Object.prototype.hasOwnProperty.call(updates, 'penulis')) {
+      metaPatch.author = updates.penulis ?? '';
+    }
+    if (Object.prototype.hasOwnProperty.call(updates, 'tahun')) {
+      // store as string per process route convention
+      metaPatch.year = updates.tahun != null ? String(updates.tahun) : '';
+    }
+
+    if (Object.keys(metaPatch).length > 0) {
+      // 1) Fetch all matching chunks (ids and metadata)
+      const { data: chunks, error: qErr } = await client
+        .from('documents')
+        .select('id, metadata')
+        .contains('metadata', { doc_id: id })
+        .limit(10000);
+      if (qErr) throw new Error(qErr.message);
+
+      if (Array.isArray(chunks) && chunks.length > 0) {
+        // 2) Build new metadata objects, preserving existing fields
+        const rows = chunks.map((c) => ({
+          id: c.id,
+          metadata: { ...(c.metadata || {}), ...metaPatch },
+        }));
+
+        // 3) Upsert by primary key id
+        const { error: upErr } = await client
+          .from('documents')
+          .upsert(rows);
+        if (upErr) throw new Error(upErr.message);
+        console.log(`[Metadata Propagate] Updated metadata for ${rows.length} chunks (doc_id=${id})`);
+      }
+    }
     return NextResponse.json({ document: data });
   } catch (err) {
     console.error('PATCH /api/documents/[id] error:', err);
@@ -63,14 +102,32 @@ export async function DELETE(request, ctx) {
       .single();
     if (getErr) throw new Error(getErr.message);
 
-    // 2) Delete DB row first (or after file delete depending on policy)
+    // 2) Cascade delete all vector chunks for this document in 'documents' table
+    //    First, count how many chunks match, then delete and log the count.
+    const { count: vecCount, error: cntErr } = await client
+      .from('documents')
+      .select('id', { count: 'exact', head: true })
+      .contains('metadata', { doc_id: id });
+    if (cntErr) {
+      console.warn('Gagal menghitung chunks vector:', cntErr.message);
+    }
+
+    // We stored metadata like { doc_id: <id>, ... }, so we match via JSON containment
+    const { error: vecErr } = await client
+      .from('documents')
+      .delete()
+      .contains('metadata', { doc_id: id });
+    if (vecErr) throw new Error(vecErr.message);
+    console.log(`[Cascade Delete] Menghapus ${vecCount ?? 0} chunk vektor untuk doc_id=${id}`);
+
+    // 3) Delete the journal reference row
     const { error: delErr } = await client
       .from('jurnal_referensi')
       .delete()
       .eq('id', id);
     if (delErr) throw new Error(delErr.message);
 
-    // 3) Try delete file from storage if we can derive path
+    // 4) Try delete file from storage if we can derive path
     // Expecting public file_url like: https://<project>.supabase.co/storage/v1/object/public/<bucket>/<path>
     if (doc?.file_url) {
       try {

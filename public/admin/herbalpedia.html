@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Herbalpedia - Admin</title>
+  <link rel="icon" type="image/png" href="../favicon.png" />
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link rel="stylesheet" href="../css/admin.css" />
+  <link rel="stylesheet" href="../css/herbal.css" />
+</head>
+<body>
+  <div class="admin-layout">
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-top">
+        <div class="sidebar-header">
+          <a href="../index.html" class="sidebar-logo">
+            <img src="../favicon.png" alt="Si-Mbah Logo">
+            <span>Si-Mbah</span>
+          </a>
+        </div>
+        <nav class="sidebar-nav">
+          <a href="./profile.html" class="nav-item">
+            <i data-feather="layout"></i>
+            <span>Dashboard</span>
+          </a>
+          <a href="./user.html" class="nav-item">
+            <i data-feather="users"></i>
+            <span>Pengguna</span>
+          </a>
+          <a href="#" class="nav-item active">
+            <i data-feather="book-open"></i>
+            <span>Herbalpedia</span>
+          </a>
+          <a href="./referensi.html" class="nav-item">
+            <i data-feather="file-text"></i>
+            <span>Referensi</span>
+          </a>
+        </nav>
+      </div>
+      <div class="sidebar-bottom">
+        <div class="user-profile">
+          <div id="admin-avatar-sidebar" class="profile-avatar"></div>
+          <div class="profile-info">
+            <span id="admin-name-sidebar" class="profile-name">Loading...</span>
+            <span class="profile-role">Admin</span>
+          </div>
+        </div>
+        <button class="btn-logout">
+          <i data-feather="log-out"></i>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="main-header">
+        <button class="sidebar-toggle" id="sidebar-toggle">
+          <i data-feather="menu"></i>
+        </button>
+      </header>
+
+      <div class="page-content">
+        <div class="welcome-header">
+          <div class="welcome-row">
+            <h1>Herbal</h1>
+            <button class="btn-primary" id="add-herb">
+              <i data-feather="plus"></i>
+              <span>Tambah Herbal</span>
+            </button>
+          </div>
+        </div>
+
+        <section class="card">
+          <div id="herb-grid" class="cards-grid"></div>
+          <div class="pagination" id="herb-pagination"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modal Create/Edit -->
+  <div class="modal" id="herb-modal" aria-hidden="true">
+    <div class="modal-dialog herb-modal">
+      <div class="modal-header">
+        <h3 id="herb-modal-title">Tambah Herbal</h3>
+        <button class="modal-close" data-close>
+          <i data-feather="x"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="herb-form">
+          <input type="hidden" id="herb-id" />
+          <div class="herb-modal-grid3">
+            <div class="herb-modal-left">
+              <div id="gambar_preview" class="form-group" style="display:none;">
+                <div class="herb-media">
+                  <img id="gambar_preview_img" class="herb-img" alt="Preview" />
+                </div>
+              </div>
+            </div>
+            <div class="herb-modal-mid">
+              <div class="form-group">
+                <label for="gambar_file">Gambar</label>
+                <input type="file" id="gambar_file" class="input-file" accept="image/*" />
+                <div class="help-text">Gambar akan di-upload ke storage/herbal/&lt;nama_tanaman&gt;.jpg</div>
+              </div>
+              <div class="form-group">
+                <label for="nama_umum">Nama Umum</label>
+                <input type="text" id="nama_umum" placeholder="Contoh: Daun Jambu Biji" required />
+              </div>
+              <div class="form-group">
+                <label for="nama_ilmiah">Nama Ilmiah (Latin)</label>
+                <input type="text" id="nama_ilmiah" placeholder="Contoh: Psidium guajava" />
+              </div>
+              <div class="form-group">
+                <label for="bagian">Bagian</label>
+                <input type="text" id="bagian" placeholder="Contoh: Daun, Akar, Biji" />
+              </div>
+            </div>
+            <div class="herb-modal-right">
+              <div class="form-group">
+                <label for="manfaat">Manfaat</label>
+                <textarea id="manfaat" rows="6" placeholder="Ringkas dan jelas tentang khasiat utama"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="cara_penggunaan">Cara Penggunaan</label>
+                <textarea id="cara_penggunaan" rows="6" placeholder="Contoh: Direbus, diminum 2x sehari"></textarea>
+              </div>
+              <div class="form-group">
+                <label for="status">Status</label>
+                <select id="status">
+                  <option value="pending">pending</option>
+                  <option value="approved">approved</option>
+                  <option value="rejected">rejected</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-secondary" data-close>Batal</button>
+        <button class="btn-primary" id="save-herb">Simpan</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/admin.js"></script>
+  <script src="../js/herbalpedia.js"></script>
+</body>
+</html>

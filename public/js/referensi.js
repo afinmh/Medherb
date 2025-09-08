@@ -2,13 +2,12 @@
   document.addEventListener('DOMContentLoaded', () => {
     // reuse access and sidebar events from admin.js
     try { if (!window.checkAdminAccess || !checkAdminAccess()) return; } catch {}
-    try { if (window.setupEventListeners) setupEventListeners(); } catch {}
     feather.replace();
 
     initRefsPage();
   });
 
-  const state = { page: 1, limit: 10, totalPages: 1 };
+  const state = { page: 1, limit: 9, totalPages: 1 };
 
   function initRefsPage(){
     loadPage(1);
@@ -18,9 +17,9 @@
 
   function loadPage(page){
     state.page = page;
-    const tbody = document.getElementById('refs-tbody');
+    const grid = document.getElementById('refs-grid');
     const pager = document.getElementById('refs-pagination');
-  if (tbody) tbody.innerHTML = '<tr><td colspan="5">Memuat...</td></tr>';
+    if (grid) grid.innerHTML = '<div>Memuat...</div>';
     if (pager) pager.innerHTML = '';
 
     const controller = new AbortController();
@@ -35,55 +34,49 @@
         const docs = Array.isArray(data?.documents) ? data.documents : [];
         const pag = data?.pagination || {};
         state.totalPages = pag.totalPages || 1;
-        renderTable(docs);
+        renderGrid(docs);
         renderPagination();
       })
       .catch(err => {
         console.error('Gagal memuat referensi:', err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="5">Gagal memuat data.</td></tr>';
+        if (grid) grid.innerHTML = '<div>Gagal memuat data.</div>';
       });
   }
 
-  function renderTable(docs){
-    const tbody = document.getElementById('refs-tbody');
-    if (!tbody) return;
-    if (!docs.length) {
-      tbody.innerHTML = '<tr><td colspan="5">Tidak ada data.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = docs.map(d => `
-      <tr data-id="${d.id}">
-        <td>${escapeHtml(d.judul || '')}</td>
-        <td>${escapeHtml(d.penulis || '-')}</td>
-        <td>${d.tahun ?? '-'}</td>
-        <td>
-          <a class="pdf-link" href="${d.file_url}" target="_blank" rel="noopener">
-            <i data-feather="file-text"></i>
-            <span>PDF</span>
-          </a>
-        </td>
-        <td>
-          ${d.is_processed ? `
-            <span class="btn-processed" title="Selesai diproses">
-              <i data-feather="check-circle"></i>
-              <span>Proses</span>
-            </span>
-          ` : `
-            <button class="btn-process" data-process title="Proses sekarang">
-              <i data-feather="loader"></i>
-              <span>Proses</span>
-            </button>
-          `}
-          <button class="btn-icon" data-edit><i data-feather="edit-2"></i></button>
-          <button class="btn-icon danger" data-delete><i data-feather="trash-2"></i></button>
-        </td>
-      </tr>
+  function renderGrid(docs){
+    const grid = document.getElementById('refs-grid');
+    if (!grid) return;
+    if (!docs.length) { grid.innerHTML = '<div>Tidak ada data.</div>'; return; }
+    grid.classList.add('cards-grid');
+    grid.innerHTML = docs.map(d => `
+      <div class="herb-card" data-id="${d.id}">
+        <div class="herb-body">
+          <div class="title-row">
+            <div class="herb-title">${escapeHtml(d.judul || '-')}</div>
+            <div class="chip">${d.tahun ?? '-'}</div>
+          </div>
+          <div class="herb-sub">${escapeHtml(d.penulis || '-')}</div>
+          <div class="herb-meta">
+            <div class="meta-row">
+              <div>Processed: ${d.is_processed ? '<span class="badge yes">Yes</span>' : '<span class="badge no">No</span>'}</div>
+              <div>File: <a class="pdf-link" href="${d.file_url}" target="_blank" rel="noopener">PDF</a></div>
+            </div>
+            <div class="meta-col">Dibuat: <span class="chip">${formatDateID(d.created_at)}</span></div>
+          </div>
+        </div>
+        <div class="herb-footer">
+          <div class="actions">
+            ${d.is_processed ? `<span class="btn-processed" title="Selesai diproses"><i data-feather="check-circle"></i><span>Proses</span></span>` : `<button class="btn-process" data-process title="Proses sekarang"><i data-feather="loader"></i><span>Proses</span></button>`}
+            <button class="btn-icon" data-edit title="Edit"><i data-feather="edit-2"></i></button>
+            <button class="btn-icon danger" data-delete title="Hapus"><i data-feather="trash-2"></i></button>
+          </div>
+        </div>
+      </div>
     `).join('');
     feather.replace();
-
-    tbody.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', onEdit));
-    tbody.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', onDelete));
-    tbody.querySelectorAll('[data-process]').forEach(btn => btn.addEventListener('click', onProcess));
+    grid.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', onEdit));
+    grid.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', onDelete));
+    grid.querySelectorAll('[data-process]').forEach(btn => btn.addEventListener('click', onProcess));
   }
 
   function renderPagination(){
@@ -110,14 +103,18 @@
   }
 
   function onEdit(e){
-    const tr = e.currentTarget.closest('tr');
-    const id = tr?.getAttribute('data-id');
-    if (!id) return;
-
+    const btn = e.currentTarget;
+    const original = btn.innerHTML;
+    btn.disabled = true; btn.innerHTML = '<i data-feather="loader" class="spin"></i>';
+    feather.replace({ elements: [btn] });
+    const card = btn.closest('.herb-card');
+    const id = card?.getAttribute('data-id');
+    if (!id) { btn.disabled = false; btn.innerHTML = original; feather.replace({ elements: [btn] }); return; }
     fetch(`/api/documents/${id}`)
-      .then(r => r.json())
+      .then(r => r.ok ? r.json() : Promise.reject(r))
       .then(({ document }) => openEditModal(document))
-      .catch(err => Swal.fire('Error','Gagal memuat data.','error'));
+      .catch(() => Swal.fire('Error','Gagal memuat data.','error'))
+      .finally(() => { btn.disabled = false; btn.innerHTML = original; feather.replace({ elements: [btn] }); });
   }
 
   function openEditModal(doc){
@@ -158,7 +155,8 @@
   function setCreateModal(show){
     const modal = document.getElementById('create-modal');
     if (!modal) return;
-    if (show) modal.classList.add('show'); else modal.classList.remove('show');
+    if (show) { modal.classList.add('show'); document.body.style.overflow='hidden'; }
+    else { modal.classList.remove('show'); document.body.style.overflow=''; }
   }
 
   function saveCreate(){
@@ -198,8 +196,10 @@
     if (!modal) return;
     if (show){
       modal.classList.add('show');
+      document.body.style.overflow = 'hidden';
     } else {
       modal.classList.remove('show');
+      document.body.style.overflow = '';
     }
   }
 
@@ -234,10 +234,10 @@
   }
 
   function onDelete(e){
-    const tr = e.currentTarget.closest('tr');
-    const id = tr?.getAttribute('data-id');
+    const btn = e.currentTarget;
+    const card = btn.closest('.herb-card');
+    const id = card?.getAttribute('data-id');
     if (!id) return;
-
     Swal.fire({
       title:'Hapus referensi ini?',
       text:'Tindakan ini tidak dapat dibatalkan.',
@@ -247,12 +247,15 @@
       cancelButtonText:'Batal',
       confirmButtonColor:'#E53E3E'
     }).then(res => {
-      if (!res.isConfirmed) return;
-      fetch(`/api/documents/${id}`, { method:'DELETE' })
-        .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); })
-        .then(() => { Swal.fire('Terhapus','Referensi dihapus.','success'); loadPage(1); })
-        .catch(() => Swal.fire('Error','Gagal menghapus.','error'));
-    });
+      if (!res.isConfirmed) return null;
+      const original = btn.innerHTML; btn.disabled = true;
+      btn.innerHTML = '<i data-feather="loader" class="spin"></i>';
+      feather.replace({ elements: [btn] });
+      return fetch(`/api/documents/${id}`, { method:'DELETE' })
+        .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r; })
+        .then(r => { if (!r) return null; Swal.fire('Terhapus','Referensi dihapus.','success'); loadPage(1); return r; })
+        .finally(() => { btn.disabled = false; btn.innerHTML = original; feather.replace({ elements: [btn] }); });
+    }).catch(() => { /* ignore */ });
   }
 
   // Proses dokumen: panggil endpoint pembersihan lalu tandai sebagai processed
@@ -296,7 +299,7 @@
         badge.innerHTML = '<i data-feather="check-circle"></i><span>Proses</span>';
         btn.replaceWith(badge);
         feather.replace({ elements: [badge] });
-        Swal.fire('Selesai', 'Dokumen berhasil dibersihkan.', 'success');
+        Swal.fire('Selesai', 'Dokumen berhasil diproses.', 'success');
       })
       .catch(err => {
         console.error('Gagal memproses dokumen:', err);

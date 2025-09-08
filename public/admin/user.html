@@ -11,6 +11,8 @@
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="../css/admin.css" />
+  <link rel="stylesheet" href="../css/herbal.css" />
+  <link rel="stylesheet" href="../css/users.css" />
 </head>
 <body>
   <div class="admin-layout">
@@ -32,7 +34,7 @@
             <i data-feather="users"></i>
             <span>Pengguna</span>
           </a>
-          <a href="#" class="nav-item">
+          <a href="./herbalpedia.html" class="nav-item">
             <i data-feather="book-open"></i>
             <span>Herbalpedia</span>
           </a>
@@ -71,25 +73,7 @@
         </div>
 
         <section class="card">
-          <div class="table-responsive">
-            <table class="table users-table">
-              <thead>
-                <tr>
-                  <th>Nama</th>
-                  <th>Email</th>
-                  <th>Pass Set</th>
-                  <th>Role</th>
-                  <th>Verify</th>
-                  <th>Dibuat</th>
-                  <th style="width:120px">Aksi</th>
-                </tr>
-              </thead>
-              <tbody id="users-tbody">
-                <tr><td colspan="6">Memuat...</td></tr>
-              </tbody>
-            </table>
-          </div>
-
+          <div id="users-grid" class="cards-grid"></div>
           <div class="pagination" id="users-pagination"></div>
         </section>
       </div>

@@ -1,0 +1,9 @@
+/* Users page card tweaks (reuses herbal card styles) */
+.user-header { display:flex; align-items:center; gap:12px; }
+.user-avatar { width: 44px; height: 44px; border-radius: 50%; overflow: hidden; background: #e6f0ee; color:#25504e; display:flex; align-items:center; justify-content:center; font-weight:700; }
+.user-avatar img { width:100%; height:100%; object-fit:cover; display:block; }
+.user-name { font-weight:700; color:#0f172a; line-height:1.2; }
+.user-email { font-size:13px; color:#6b7280; }
+.user-role { margin-left:auto; }
+.user-badges { display:grid; grid-template-columns:1fr 1fr; gap:8px 12px; }
+.user-stats { margin-top:6px; color:#4b5563; }

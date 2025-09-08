@@ -23,8 +23,9 @@ export async function GET(request) {
 
     let query = supabase
       .from('users')
-      .select('*', { count: 'exact' })
-      .order('created_at', { ascending: false });
+      .select('id,name,email,role,created_at,is_verified,password_set,avatar_url', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .order('id', { ascending: false, nullsFirst: false });
 
     if (role) {
       query = query.eq('role', role);

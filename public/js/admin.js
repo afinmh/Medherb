@@ -1,9 +1,13 @@
-document.addEventListener('DOMContentLoaded', function() {
-    // 1. Inisialisasi utama aplikasi
+// Pastikan init tetap berjalan meski DOMContentLoaded sudah lewat
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => { console.info('[admin] DOMContentLoaded'); initializeApp(); });
+} else {
+    console.info('[admin] init (document already ready)');
     initializeApp();
-});
+}
 
 function initializeApp() {
+    console.info('[admin] initializeApp called');
     // 2. Periksa akses, hentikan jika bukan admin
     if (!checkAdminAccess()) return;
 
@@ -32,35 +36,57 @@ function checkAdminAccess() {
 }
 
 function setupEventListeners() {
-    // Toggle sidebar di mobile
-    const sidebarToggle = document.getElementById('sidebar-toggle');
+    if (window.__adminListenersBound) {
+        console.info('[admin] setupEventListeners skipped (already bound)');
+        return;
+    }
+    window.__adminListenersBound = true;
+    console.info('[admin] setupEventListeners');
+    // Toggle sidebar di mobile (delegated + reusable)
     const sidebar = document.getElementById('sidebar');
     const sidebarOverlay = document.getElementById('sidebar-overlay');
-    
-    if (sidebarToggle && sidebar) {
-        sidebarToggle.addEventListener('click', () => {
-            sidebar.classList.toggle('show');
-            if (sidebarOverlay) {
-                sidebarOverlay.classList.toggle('show');
+    const sidebarToggle = document.getElementById('sidebar-toggle');
+    console.info('[admin] elements', { hasSidebar: !!sidebar, hasOverlay: !!sidebarOverlay, hasToggle: !!sidebarToggle });
+
+    const toggleSidebar = (show) => {
+        if (!sidebar) return;
+        const willShow = typeof show === 'boolean' ? show : !sidebar.classList.contains('show');
+        sidebar.classList.toggle('show', willShow);
+        if (sidebarOverlay) sidebarOverlay.classList.toggle('show', willShow);
+        document.body.style.overflow = willShow ? 'hidden' : '';
+        console.info('[admin] toggleSidebar', { willShow });
+    };
+
+    // Button by id
+    if (sidebarToggle) {
+        sidebarToggle.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            console.info('[admin] toggle button clicked');
+            toggleSidebar();
+        });
+    } else {
+        // Fallback: event delegation only when button not found at init
+        document.addEventListener('click', (e) => {
+            const btn = e.target && (e.target.closest ? e.target.closest('#sidebar-toggle') : null);
+            if (btn) {
+                e.preventDefault();
+                console.info('[admin] delegated toggle click');
+                toggleSidebar();
             }
         });
     }
 
     // Tutup sidebar saat overlay diklik
     if (sidebarOverlay) {
-        sidebarOverlay.addEventListener('click', () => {
-            sidebar.classList.remove('show');
-            sidebarOverlay.classList.remove('show');
-        });
+    sidebarOverlay.addEventListener('click', () => { console.info('[admin] overlay click'); toggleSidebar(false); });
     }
 
     // Tutup sidebar dengan tombol ESC
     document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && sidebar.classList.contains('show')) {
-            sidebar.classList.remove('show');
-            if (sidebarOverlay) {
-                sidebarOverlay.classList.remove('show');
-            }
+        if (e.key === 'Escape' && sidebar && sidebar.classList.contains('show')) {
+            console.info('[admin] ESC pressed');
+            toggleSidebar(false);
         }
     });
 
@@ -138,12 +164,11 @@ function loadAdminProfile() {
 }
 
 function loadDashboardStats() {
-    // Tetap gunakan dummy untuk plants (sementara)
+    // Herbal count (ambil dari /api/herbalpedia)
     const usersEl = document.getElementById('total-users');
     const plantsEl = document.getElementById('total-plants');
     const journalsEl = document.getElementById('total-journals');
-
-    if (plantsEl) plantsEl.textContent = '821';
+    if (plantsEl) plantsEl.textContent = '...';
     if (usersEl) usersEl.textContent = '...';
     if (journalsEl) journalsEl.textContent = '...';
 
@@ -189,6 +214,28 @@ function loadDashboardStats() {
             .catch((err) => {
                 console.error('Gagal memuat total jurnal:', err);
                 if (journalsEl) journalsEl.textContent = '-';
+            });
+    }
+
+    // Ambil total herbal dari API /api/herbalpedia
+    {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        fetch('/api/herbalpedia?limit=1&page=1', { signal: controller.signal, headers: { 'Accept': 'application/json' } })
+            .then(async (res) => {
+                clearTimeout(timeout);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const total = data?.pagination?.totalItems;
+                if (typeof total === 'number') {
+                    if (plantsEl) plantsEl.textContent = formatNumber(total);
+                } else {
+                    if (plantsEl) plantsEl.textContent = '-';
+                }
+            })
+            .catch((err) => {
+                console.error('Gagal memuat total herbal:', err);
+                if (plantsEl) plantsEl.textContent = '-';
             });
     }
 }
@@ -270,6 +317,41 @@ function loadRecentActivity() {
             .catch((err) => {
                 console.error('Gagal memuat aktivitas jurnal terbaru:', err);
                 if (textEl) textEl.textContent = 'Gagal memuat jurnal terbaru.';
+                if (timeEl) timeEl.textContent = '-';
+            });
+    }
+
+    // 3) Aktivitas herbal terbaru (gunakan ikon feather)
+    const herbIcon = document.querySelector('.recent-activity .activity-item i[data-feather="feather"]');
+    const herbItem = herbIcon ? herbIcon.parentElement : null;
+    if (herbItem) {
+        const textEl = herbItem.querySelector('.activity-text');
+        const timeEl = herbItem.querySelector('.activity-time');
+        if (textEl) textEl.textContent = 'Memuat herbal terbaru...';
+        if (timeEl) timeEl.textContent = '';
+
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 10000);
+        fetch('/api/herbalpedia?limit=1&page=1', { signal: controller.signal, headers: { 'Accept': 'application/json' } })
+            .then(async (res) => {
+                clearTimeout(timeout);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                const data = await res.json();
+                const item = Array.isArray(data?.items) ? data.items[0] : null;
+                if (!item) {
+                    if (textEl) textEl.textContent = 'Belum ada data herbal.';
+                    if (timeEl) timeEl.textContent = '-';
+                    return;
+                }
+                const title = item.nama_umum || 'Herbal baru';
+                const createdAt = item.created_at || null;
+                const shortTitle = truncateWords(title, 3);
+                if (textEl) textEl.textContent = `Herbal "${shortTitle}" baru saja ditambahkan.`;
+                if (timeEl) timeEl.textContent = formatDateID(createdAt);
+            })
+            .catch((err) => {
+                console.error('Gagal memuat herbal terbaru:', err);
+                if (textEl) textEl.textContent = 'Gagal memuat herbal terbaru.';
                 if (timeEl) timeEl.textContent = '-';
             });
     }

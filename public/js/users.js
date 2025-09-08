@@ -1,7 +1,6 @@
 (function(){
   document.addEventListener('DOMContentLoaded', () => {
     try { if (!window.checkAdminAccess || !checkAdminAccess()) return; } catch {}
-    try { if (window.setupEventListeners) setupEventListeners(); } catch {}
     feather.replace();
     initUsersPage();
   });
@@ -15,9 +14,9 @@
 
   function loadPage(page){
     state.page = page;
-    const tbody = document.getElementById('users-tbody');
+    const grid = document.getElementById('users-grid');
     const pager = document.getElementById('users-pagination');
-    if (tbody) tbody.innerHTML = '<tr><td colspan="6">Memuat...</td></tr>';
+    if (grid) grid.innerHTML = '<div>Memuat...</div>';
     if (pager) pager.innerHTML = '';
 
     const controller = new AbortController();
@@ -28,36 +27,63 @@
         const items = Array.isArray(data?.users) ? data.users : [];
         const pag = data?.pagination || {};
         state.totalPages = pag.totalPages || 1;
-        renderTable(items);
+        renderGrid(items);
         renderPagination();
       })
       .catch(err => {
         console.error('Gagal memuat pengguna:', err);
-        if (tbody) tbody.innerHTML = '<tr><td colspan="6">Gagal memuat data.</td></tr>';
+        if (grid) grid.innerHTML = '<div>Gagal memuat data.</div>';
       });
   }
 
-  function renderTable(items){
-    const tbody = document.getElementById('users-tbody');
-    if (!tbody) return;
-  if (!items.length) { tbody.innerHTML = '<tr><td colspan="7">Tidak ada data.</td></tr>'; return; }
-  tbody.innerHTML = items.map(u => `
-      <tr data-id="${u.id}">
-    <td class="text-ellipsis">${escapeHtml(trunc(u.name || '', 24))}</td>
-    <td class="text-ellipsis">${escapeHtml(trunc(u.email || '', 28))}</td>
-    <td>${u.password_set ? 'Ya' : 'Tidak'}</td>
-    <td>${escapeHtml(u.role || '')}</td>
-        <td>${u.is_verified ? 'Ya' : 'Tidak'}</td>
-        <td>${formatDateID(u.created_at)}</td>
-        <td>
-          <button class="btn-icon" data-edit><i data-feather="edit-2"></i></button>
-          <button class="btn-icon danger" data-delete><i data-feather="trash-2"></i></button>
-        </td>
-      </tr>
-    `).join('');
+  function initials(name){
+    const s = String(name||'').trim(); if (!s) return '?';
+    const parts = s.split(/\s+/).slice(0,2);
+    return parts.map(p=>p[0]).join('').toUpperCase();
+  }
+
+  function renderGrid(items){
+    const grid = document.getElementById('users-grid');
+    if (!grid) return;
+    if (!items.length) { grid.innerHTML = '<div>Tidak ada data.</div>'; return; }
+    grid.classList.add('cards-grid');
+    grid.innerHTML = items.map(u => {
+      const imgUrl = u.avatar_url || u.gambar_url || '';
+      const avatar = imgUrl
+        ? `<div class="user-avatar"><img src="${imgUrl}" alt="${escapeHtml(u.name||'')}" onerror="this.onerror=null; this.src='/favicon.png';"></div>`
+        : `<div class="user-avatar">${initials(u.name)}</div>`;
+      return `
+      <div class="herb-card" data-id="${u.id}">
+        <div class="herb-body">
+          <div class="user-header">
+            ${avatar}
+            <div style="flex:1">
+              <div class="title-row">
+                <div class="herb-title user-name">${escapeHtml(u.name || '-')}</div>
+                <div class="chip user-role">${escapeHtml(u.role || 'user')}</div>
+              </div>
+              <div class="user-email">${escapeHtml(u.email || '-')}</div>
+            </div>
+          </div>
+          <div class="herb-meta">
+            <div class="meta-row">
+              <div>Pass set: ${u.password_set ? '<span class="badge yes">Ya</span>' : '<span class="badge no">Tidak</span>'}</div>
+              <div>Verified: ${u.is_verified ? '<span class="badge yes">Ya</span>' : '<span class="badge no">Tidak</span>'}</div>
+            </div>
+            <div class="meta-col">Dibuat: <span class="chip">${formatDateID(u.created_at)}</span></div>
+          </div>
+        </div>
+        <div class="herb-footer">
+          <div class="actions">
+            <button class="btn-icon" data-edit title="Edit"><i data-feather="edit-2"></i></button>
+            <button class="btn-icon danger" data-delete title="Hapus"><i data-feather="trash-2"></i></button>
+          </div>
+        </div>
+      </div>
+    `; }).join('');
     feather.replace();
-    tbody.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', onEdit));
-    tbody.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', onDelete));
+    grid.querySelectorAll('[data-edit]').forEach(btn => btn.addEventListener('click', onEdit));
+    grid.querySelectorAll('[data-delete]').forEach(btn => btn.addEventListener('click', onDelete));
   }
 
   function renderPagination(){
@@ -76,10 +102,19 @@
   }
 
   function onEdit(e){
-    const tr = e.currentTarget.closest('tr');
-    const id = tr?.getAttribute('data-id');
-    if (!id) return;
-    fetch(`/api/users/${id}`).then(r => r.json()).then(({ user }) => openEditModal(user)).catch(()=>Swal.fire('Error','Gagal memuat data.','error'));
+    const btn = e.currentTarget;
+    const original = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = '<i data-feather="loader" class="spin"></i>';
+    feather.replace({ elements: [btn] });
+    const card = btn.closest('.herb-card');
+    const id = card?.getAttribute('data-id');
+    if (!id) { btn.disabled = false; btn.innerHTML = original; feather.replace({ elements: [btn] }); return; }
+    fetch(`/api/users/${id}`)
+      .then(r => r.ok ? r.json() : Promise.reject(r))
+      .then(({ user }) => { openEditModal(user); })
+      .catch(()=>Swal.fire('Error','Gagal memuat data.','error'))
+      .finally(() => { btn.disabled = false; btn.innerHTML = original; feather.replace({ elements: [btn] }); });
   }
 
   function openEditModal(user){
@@ -127,11 +162,23 @@
   }
 
   function onDelete(e){
-    const tr = e.currentTarget.closest('tr'); const id = tr?.getAttribute('data-id'); if (!id) return;
-    Swal.fire({ title:'Hapus pengguna?', text:'Tindakan tidak dapat dibatalkan.', icon:'warning', showCancelButton:true, confirmButtonColor:'#E53E3E' })
-      .then(res => { if (!res.isConfirmed) return; return fetch(`/api/users/${id}`, { method:'DELETE' }); })
-      .then(r => { if (r && !r.ok) throw new Error('HTTP '+r.status); Swal.fire('Terhapus','Pengguna dihapus.','success'); loadPage(1); })
-      .catch(()=>Swal.fire('Error','Gagal menghapus.','error'));
+    const btn = e.currentTarget;
+    const card = btn.closest('.herb-card');
+    const id = card?.getAttribute('data-id'); if (!id) return;
+    Swal.fire({ title:'Hapus pengguna?', text:'Tindakan tidak dapat dibatalkan.', icon:'warning', showCancelButton:true, confirmButtonColor:'#E53E3E', cancelButtonText:'Batal' })
+      .then(res => {
+        if (!res.isConfirmed) return null; // cancel, stop here
+        btn.disabled = true;
+        const original = btn.innerHTML;
+        btn.dataset._orig = original;
+        btn.innerHTML = '<i data-feather="loader" class="spin"></i>';
+        feather.replace({ elements: [btn] });
+        return fetch(`/api/users/${id}`, { method:'DELETE' })
+          .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r; })
+          .then(() => { Swal.fire('Terhapus','Pengguna dihapus.','success'); loadPage(1); })
+          .finally(() => { btn.disabled = false; btn.innerHTML = btn.dataset._orig || original; feather.replace({ elements: [btn] }); delete btn.dataset._orig; });
+      })
+      .catch(err => { if (err) Swal.fire('Error','Gagal menghapus.','error'); });
   }
 
   function formatDateID(dateStr){
