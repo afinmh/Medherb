@@ -8,10 +8,13 @@ body, html {
 }
 
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
 :root {
+    --accent-light: #a3b6b5;
     --accent: #5A7D7C;
     --text-dark: #374151;
     --text-muted: #6B7280;

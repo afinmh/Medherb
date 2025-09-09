@@ -29,10 +29,30 @@ export async function PATCH(request, { params }) {
     const body = await request.json();
     const client = sb();
 
+    // Identify the requester from the Authorization Bearer token
+    let requester = null;
+    try {
+      const auth = request.headers.get('authorization');
+      if (auth && auth.startsWith('Bearer ')) {
+        const token = auth.split(' ')[1];
+        const anon = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_KEY);
+        const { data, error } = await anon.auth.getUser(token);
+        if (!error && data?.user) requester = data.user;
+      }
+    } catch {}
+
     const updates = {};
     if (typeof body.name === 'string') updates.name = body.name;
     if (typeof body.email === 'string') updates.email = body.email;
-    if (typeof body.role === 'string') updates.role = body.role;
+    if (typeof body.role === 'string') {
+      // Only the primary admin (admin@gmail.com) may change roles
+      const email = String(requester?.email || '').toLowerCase();
+      if (email === 'admin@gmail.com') {
+        updates.role = body.role;
+      } else {
+        return NextResponse.json({ error: 'Hanya admin utama yang dapat mengubah role.' }, { status: 403 });
+      }
+    }
     if (typeof body.is_verified === 'boolean') updates.is_verified = body.is_verified;
 
     // Sync changes to auth for email/name

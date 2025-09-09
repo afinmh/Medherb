@@ -16,7 +16,9 @@ export async function GET(request) {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
     const limit = parseInt(searchParams.get('limit')) || 6;
-    const search = (searchParams.get('search') || '').trim();
+  const search = (searchParams.get('search') || '').trim();
+  const uploadedBy = (searchParams.get('uploaded_by') || '').trim();
+  const status = (searchParams.get('status') || '').trim();
 
     const offset = (page - 1) * limit;
     let query = client
@@ -26,6 +28,12 @@ export async function GET(request) {
       .order('id', { ascending: false });
     if (search) {
       query = query.or(`nama_umum.ilike.%${search}%,nama_ilmiah.ilike.%${search}%`);
+    }
+    if (uploadedBy) {
+      query = query.eq('uploaded_by', uploadedBy);
+    }
+    if (status) {
+      query = query.eq('status', status);
     }
     query = query.range(offset, offset + limit - 1);
 
@@ -58,7 +66,7 @@ export async function POST(request) {
     }
     const body = await request.json();
 
-    const payload = {
+  const payload = {
       nama_umum: String(body?.nama_umum || '').trim(),
       nama_ilmiah: body?.nama_ilmiah ? String(body.nama_ilmiah).trim() : null,
       bagian: body?.bagian != null ? String(body.bagian).trim() : null,
@@ -87,6 +95,8 @@ export async function POST(request) {
 
     // Determine uploader from Authorization token if available
     let uploaded_by = null;
+    let requesterId = null;
+    let requesterIsAdmin = false;
     const auth = request.headers.get('authorization');
     if (auth && auth.startsWith('Bearer ')) {
       const token = auth.split(' ')[1];
@@ -95,7 +105,23 @@ export async function POST(request) {
       const { data, error } = await client.auth.getUser(token);
       if (!error && data?.user?.id) {
         uploaded_by = data.user.id;
+        requesterId = data.user.id;
       }
+      // Check role
+      if (requesterId) {
+        const adminClient = sb(true);
+        const { data: urow } = await adminClient
+          .from('users')
+          .select('role')
+          .eq('id', requesterId)
+          .single();
+        requesterIsAdmin = ((urow?.role || '').toLowerCase() === 'admin');
+      }
+    }
+
+    // Only admins can set status at create time; non-admins forced to pending
+    if (!requesterIsAdmin) {
+      payload.status = 'pending';
     }
 
     const client = sb(true);

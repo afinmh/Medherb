@@ -21,10 +21,14 @@
 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
-  fetch(`/api/users?page=${page}&limit=${state.limit}&role=user`, { signal: controller.signal })
+    const token = localStorage.getItem('access_token');
+    const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+  fetch(`/api/users?page=${page}&limit=${state.limit}`, { signal: controller.signal, headers })
       .then(async res => { clearTimeout(timeout); if (!res.ok) throw new Error('HTTP '+res.status); return res.json(); })
       .then(data => {
-        const items = Array.isArray(data?.users) ? data.users : [];
+        const itemsRaw = Array.isArray(data?.users) ? data.users : [];
+        // Exclude primary admin account by email
+        const items = itemsRaw.filter(u => String(u?.email || '').toLowerCase() !== 'admin@gmail.com');
         const pag = data?.pagination || {};
         state.totalPages = pag.totalPages || 1;
         renderGrid(items);
@@ -110,11 +114,15 @@
     const card = btn.closest('.herb-card');
     const id = card?.getAttribute('data-id');
     if (!id) { btn.disabled = false; btn.innerHTML = original; feather.replace({ elements: [btn] }); return; }
-    fetch(`/api/users/${id}`)
+    {
+      const token = localStorage.getItem('access_token');
+      const headers = token ? { 'Authorization': `Bearer ${token}` } : {};
+      fetch(`/api/users/${id}`, { headers })
       .then(r => r.ok ? r.json() : Promise.reject(r))
       .then(({ user }) => { openEditModal(user); })
       .catch(()=>Swal.fire('Error','Gagal memuat data.','error'))
       .finally(() => { btn.disabled = false; btn.innerHTML = original; feather.replace({ elements: [btn] }); });
+    }
   }
 
   function openEditModal(user){
@@ -155,7 +163,10 @@
       is_verified: document.getElementById('user-edit-verified').checked
     };
   if (!payload.name) { Swal.fire('Validasi','Nama wajib diisi.','warning'); return; }
-    fetch(`/api/users/${id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) })
+    const token = localStorage.getItem('access_token');
+    const headers = { 'Content-Type': 'application/json' };
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+    fetch(`/api/users/${id}`, { method: 'PATCH', headers, body: JSON.stringify(payload) })
       .then(async res => { if (!res.ok) throw new Error('HTTP '+res.status); return res.json(); })
       .then(() => { setEditModal(false); Swal.fire('Berhasil','Pengguna diperbarui.','success'); loadPage(state.page); })
       .catch(()=>Swal.fire('Error','Gagal menyimpan perubahan.','error'));
@@ -165,6 +176,8 @@
     const btn = e.currentTarget;
     const card = btn.closest('.herb-card');
     const id = card?.getAttribute('data-id'); if (!id) return;
+  const token = localStorage.getItem('access_token');
+  if (!token) { Swal.fire('Sesi berakhir','Silakan login ulang sebagai admin.','warning'); return; }
     Swal.fire({ title:'Hapus pengguna?', text:'Tindakan tidak dapat dibatalkan.', icon:'warning', showCancelButton:true, confirmButtonColor:'#E53E3E', cancelButtonText:'Batal' })
       .then(res => {
         if (!res.isConfirmed) return null; // cancel, stop here
@@ -173,7 +186,7 @@
         btn.dataset._orig = original;
         btn.innerHTML = '<i data-feather="loader" class="spin"></i>';
         feather.replace({ elements: [btn] });
-        return fetch(`/api/users/${id}`, { method:'DELETE' })
+    return fetch(`/api/users/${id}`, { method:'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
           .then(r => { if (!r.ok) throw new Error('HTTP '+r.status); return r; })
           .then(() => { Swal.fire('Terhapus','Pengguna dihapus.','success'); loadPage(1); })
           .finally(() => { btn.disabled = false; btn.innerHTML = btn.dataset._orig || original; feather.replace({ elements: [btn] }); delete btn.dataset._orig; });

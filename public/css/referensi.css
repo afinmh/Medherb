@@ -8,12 +8,13 @@ body, html {
 }
 
 * {
+    margin: 0;
+    padding: 0;
     box-sizing: border-box;
 }
 
 :root {
     --accent: #5A7D7C;
-    --accent-light: #e6eceb;
     --accent-dark: #4a6b6a;
     --text-dark: #374151;
     --text-muted: #6B7280;
@@ -23,6 +24,10 @@ body, html {
     --shadow-sm: 0 2px 4px rgba(0,0,0,0.04);
     --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
     --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+    --accent: #5A7D7C;
+    --accent-dark: #476261;
+    --accent-light: #a3b6b5;
+    --accent-super-light: #eef1f1;
 }
 
 /* -- Header -- */

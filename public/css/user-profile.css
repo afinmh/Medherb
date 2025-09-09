@@ -444,3 +444,144 @@ body {
 footer {
     display: none;
 }
+
+/* --- Modal styles copied from catatan.css, scoped for profile --- */
+/* Create Herbal Modal on profile page */
+#create-herb-modal.catatan-modal.hidden { display: none; }
+#create-herb-modal.catatan-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 100000;
+    display: grid;
+    place-items: center;
+    padding: 24px;
+    overflow-y: auto;
+}
+#create-herb-modal .modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.45);
+    backdrop-filter: blur(3.5px);
+    animation: modalFadeIn .18s ease-out;
+}
+#create-herb-modal .modal-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(820px, 92%);
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid #e5e7eb;
+    border-radius: 20px;
+    box-shadow: 0 24px 80px rgba(2,6,23,.22), 0 2px 6px rgba(2,6,23,.08);
+    overflow: hidden;
+    max-height: 92vh;
+    display: flex;
+    flex-direction: column;
+    animation: modalZoomIn .2s cubic-bezier(.2,.8,.2,1);
+}
+#create-herb-modal .modal-header { background: #fff; border-bottom: 1px solid #eef0f3; padding: 12px 16px; display:flex; align-items:center; justify-content: space-between; }
+#create-herb-modal .modal-header h3 { margin: 0; font-size: 1.05rem; font-weight: 700; color: #0f172a; }
+#create-herb-modal .modal-close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    width: 40px;
+    height: 40px;
+    border: 1px solid #e5e7eb;
+    border-radius: 999px;
+    background: rgba(255,255,255,.95);
+    color: #0f172a;
+    font-size: 22px;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(2,6,23,.08);
+    transition: background .15s ease, transform .12s ease, box-shadow .15s ease;
+}
+#create-herb-modal .modal-close:hover { background: #fff; transform: scale(1.04); box-shadow: 0 6px 18px rgba(2,6,23,.12); }
+#create-herb-modal .modal-close:active { transform: scale(0.98); }
+#create-herb-modal .modal-body {
+    display: block;
+    padding: 16px 18px 18px;
+    overflow-y: auto;
+    overflow-x: hidden; /* prevent horizontal scroll */
+    max-height: calc(92vh - 120px);
+    box-sizing: border-box;
+}
+#create-herb-modal .modal-footer { background: #fff; border-top: 1px solid #eef0f3; padding: 12px 16px; display:flex; justify-content:flex-end; gap: 10px; }
+
+/* Grid columns like in catatan */
+#create-herb-modal .create-grid3 {
+    display: grid;
+    grid-template-columns: minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 16px;
+    width: 100%;
+    box-sizing: border-box;
+}
+/* Prevent overflow in middle/right columns on narrow screens */
+#create-herb-modal .create-mid,
+#create-herb-modal .create-right { min-width: 0; }
+@media (max-width: 920px) { #create-herb-modal .create-grid3 { grid-template-columns: 1fr; } }
+#create-herb-modal .create-media { display: flex; flex-direction: column; gap: 10px; }
+#create-herb-modal .image-preview { width: 100%; padding-top: 65%; background: #f3f4f6; border-radius: 12px; border: 1px dashed #e3e8ef; position: relative; overflow: hidden; }
+#create-herb-modal .image-preview img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+#create-herb-modal .form-label { font-size: .9rem; font-weight: 600; color: #475569; }
+#create-herb-modal .form-input, #create-herb-modal .form-textarea, #create-herb-modal .input-file { width: 100%; border: 1px solid #e5e7eb; border-radius: 12px; background: #fbfdff; padding: 10px 12px; outline: none; }
+#create-herb-modal .form-input,
+#create-herb-modal .form-textarea,
+#create-herb-modal .input-file { box-sizing: border-box; }
+#create-herb-modal .form-textarea { min-height: 120px; resize: vertical; }
+#create-herb-modal .form-input:focus, #create-herb-modal .form-textarea:focus { border-color: #cbd5e1; box-shadow: 0 0 0 3px rgba(203,213,225,.35); background: #fff; }
+#create-herb-modal .form-group { display: grid; gap: 6px; }
+
+/* Buttons */
+#create-herb-modal .btn-primary { background: var(--accent, #5A7D7C); color: #fff; border: 1px solid var(--accent, #5A7D7C); border-radius: 10px; padding: 10px 14px; cursor: pointer; }
+#create-herb-modal .btn-primary:hover { background: var(--accent-dark, #476261); border-color: var(--accent-dark, #476261); }
+#create-herb-modal .btn-secondary { background: #eef2f7; color: #0f172a; border: 1px solid #e5e7eb; border-radius: 10px; padding: 10px 14px; cursor: pointer; }
+
+@keyframes modalFadeIn { from { opacity: 0 } to { opacity: 1 } }
+@keyframes modalZoomIn { from { transform: translateY(8px) scale(.98); opacity: .0 } to { transform: translateY(0) scale(1); opacity: 1 } }
+
+/* Lock background scroll when modal open */
+body.modal-open { overflow: hidden; }
+
+/* ==== Herbalku Cards & Pagination (copied essentials from herbal.css) ==== */
+.cards-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 1024px) { .cards-grid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 640px)  { .cards-grid { grid-template-columns: 1fr; } }
+
+.herb-card { background: #fff; border: 1px solid #e9edf2; border-radius: 16px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 1px 2px rgba(0,0,0,0.03); transition: box-shadow .2s ease, transform .12s ease; }
+.herb-card:hover { box-shadow: 0 10px 28px rgba(0,0,0,0.08); transform: translateY(-2px); }
+
+.herb-media { position: relative; width: 100%; padding-top: 56.25%; background: #f3f4f6; }
+.herb-img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+
+.herb-body { padding: 14px 16px 12px; display: flex; flex-direction: column; gap: 8px; }
+.herb-title { font-weight: 700; font-size: 17px; color: #111827; line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.title-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.herb-sub { font-size: 13.5px; color: #6b7280; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 1; line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+
+.herb-meta { display: grid; gap: 8px 12px; font-size: 13px; color: #374151; }
+.herb-meta .meta-row { display: grid; grid-template-columns: 1fr 1fr; gap: 6px 12px; }
+@media (max-width: 640px) {.herb-meta .meta-row { grid-template-columns: 1fr; }}
+
+.badge { display: inline-flex; align-items: center; gap: 6px; padding: 2px 8px; border-radius: 9999px; font-size: 11.5px; line-height: 1.2; border: 1px solid transparent; }
+.badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .8; }
+.badge.yes { background: #ecfdf5; color: #0b7c59; }
+.badge.no { background: #fef2f2; color: #b42323; }
+.badge.status-approved { background: #ecfdf5; color: #0b7c59; }
+.badge.status-pending  { background: #fff7e6; color: #a05a00; }
+.badge.status-rejected { background: #fef2f2; color: #b42323; }
+
+.chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; background: #f7f8fa; border: 1px solid #e9edf2; border-radius: 10px; font-size: 12px; color: #374151; }
+
+.herb-footer { display: flex; align-items: center; justify-content: space-between; padding: 10px 12px; border-top: 1px solid #f3f4f6; }
+.actions { display: flex; gap: 8px; }
+.btn-icon { display: inline-flex; align-items: center; justify-content: center; width: 36px; height: 36px; border-radius: 10px; border: 1px solid #e9edf2; background: #f9fafb; color: #0f172a; transition: background .15s ease, border-color .15s ease; }
+.btn-icon:hover { background: #eef2f7; border-color: #dbe3ee; }
+.btn-icon.danger { color: #b42323; border-color: #f3d1d1; background: #fdf7f7; }
+
+.pagination { margin-top: 16px; display: flex; gap: 8px; flex-wrap: wrap; }
+.page-btn { padding: 6px 10px; border: 1px solid #e5e7eb; border-radius: 8px; background: #fff; }
+.page-btn.active { background: #111827; color: #fff; border-color: #111827; }
+
+.herb-meta .meta-col { padding-top: 4px; border-top: 1px dashed #eef0f3; color: #4b5563; }

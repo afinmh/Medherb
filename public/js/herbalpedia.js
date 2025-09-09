@@ -251,12 +251,17 @@
     const btn = e.currentTarget;
     const card = btn.closest('.herb-card');
     const id = card?.getAttribute('data-id'); if(!id) return;
+    const token = localStorage.getItem('access_token');
+    if (!token) {
+      Swal.fire('Sesi berakhir','Silakan login ulang sebagai admin.','warning');
+      return;
+    }
     Swal.fire({ title:'Hapus herbal ini?', text:'Tindakan ini tidak dapat dibatalkan.', icon:'warning', showCancelButton:true, confirmButtonText:'Hapus', cancelButtonText:'Batal', confirmButtonColor:'#E53E3E' })
       .then(res => {
         if(!res.isConfirmed) return null;
         const original = btn.innerHTML; btn.disabled = true; btn.innerHTML = '<i data-feather="loader" class="spin"></i>';
         feather.replace({ elements: [btn] });
-        return fetch(`/api/herbalpedia/${id}`, { method:'DELETE' })
+        return fetch(`/api/herbalpedia/${id}`, { method:'DELETE', headers: { 'Authorization': `Bearer ${token}` } })
           .then(r => { if(!r.ok) throw new Error('HTTP '+r.status); return r; })
           .then(() => { Swal.fire('Terhapus','Data dihapus.','success'); loadPage(1); })
           .finally(() => { btn.disabled = false; btn.innerHTML = original; feather.replace({ elements: [btn] }); });

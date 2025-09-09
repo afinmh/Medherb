@@ -122,14 +122,22 @@
 
             <!-- Herbalku Section -->
             <section id="herbalku-section" class="content-section">
-                <div class="content-header">
-                    <h2>Herbalku</h2>
+                <div class="content-header" style="display:flex; align-items:center; justify-content:space-between; gap:12px;">
+                    <h2 style="margin:0;">Herbalku</h2>
+                    <button class="btn-submit" id="btn-add-my-herb" style="gap:.5rem; display:inline-flex; align-items:center;">
+                        <i data-feather="plus"></i>
+                        <span>Tambah Herbal</span>
+                    </button>
                 </div>
-                <div class="placeholder-content">
-                    <i data-feather="book-open"></i>
-                    <h3>Segera Hadir</h3>
-                    <p>Fitur ini sedang dalam pengembangan. Di sini Anda akan dapat melihat koleksi herbal yang Anda simpan.</p>
-                </div>
+                <section class="card" style="background:#fff;border:1px solid var(--border-color);border-radius:12px;padding:12px;">
+                    <div id="my-herb-grid" class="cards-grid"></div>
+                    <div id="my-herb-empty" class="placeholder-content" style="display:none;">
+                        <i data-feather="book-open"></i>
+                        <h3>Belum Ada Kontribusi</h3>
+                        <p>Anda belum berkontribusi menambahkan herbal. Klik tombol "Tambah Herbal" untuk mulai menambah data.</p>
+                    </div>
+                    <div class="pagination" id="my-herb-pagination" style="margin-top:16px;"></div>
+                </section>
             </section>
 
             <!-- Settings Section removed as requested -->
@@ -157,5 +165,64 @@
     <!-- JavaScript -->
     <script src="../js/main.js"></script>
     <script src="../js/user-profile.js"></script>
+    <script src="../js/herbalku.js"></script>
+
+    <!-- Create Herbal Modal (same structure as catatan) -->
+    <div id="create-herb-modal" class="catatan-modal hidden" role="dialog" aria-modal="true" aria-hidden="true" aria-labelledby="create-herb-title">
+        <div class="modal-backdrop" data-close></div>
+        <div class="modal-dialog">
+            <div class="modal-header">
+                <h3 id="create-herb-title">Tambah Herbal</h3>
+                <button class="modal-close" data-close aria-label="Tutup">&times;</button>
+            </div>
+            <form id="create-herb-form">
+                <div class="modal-body">
+                    <div class="create-grid3">
+                        <!-- Kiri: Preview & Upload -->
+                        <div class="create-media">
+                            <div class="image-preview" id="create-image-preview"></div>
+                            <div>
+                                <label class="form-label" for="create-image">Gambar (opsional)</label>
+                                <input type="file" id="create-image" class="input-file" accept="image/*" />
+                                <div style="color:#6B7280;font-size:12px;margin-top:6px;">PNG/JPG, maks 3MB</div>
+                            </div>
+                        </div>
+
+                        <!-- Tengah: Input dasar -->
+                        <div class="create-mid">
+                            <div class="form-group">
+                                <label class="form-label" for="create-nama-umum">Nama Umum</label>
+                                <input id="create-nama-umum" class="form-input" type="text" placeholder="Jahe" required />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="create-nama-ilmiah">Nama Ilmiah</label>
+                                <input id="create-nama-ilmiah" class="form-input" type="text" placeholder="Zingiber officinale" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="create-bagian">Bagian</label>
+                                <input id="create-bagian" class="form-input" type="text" placeholder="Akar, daun, bunga..." />
+                            </div>
+                        </div>
+
+                        <!-- Kanan: Textarea -->
+                        <div class="create-right">
+                            <div class="form-group">
+                                <label class="form-label" for="create-penggunaan">Cara Penggunaan</label>
+                                <textarea id="create-penggunaan" class="form-textarea" rows="6" placeholder="Contoh: direbus 10 menit, diminum hangat..."></textarea>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label" for="create-manfaat">Manfaat</label>
+                                <textarea id="create-manfaat" class="form-textarea" rows="6" placeholder="Contoh: meredakan mual, menghangatkan tubuh..."></textarea>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-secondary" data-close>Batal</button>
+                    <button type="submit" id="create-submit" class="btn-primary">Simpan</button>
+                </div>
+            </form>
+        </div>
+    </div>
 </body>
 </html>
