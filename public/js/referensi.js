@@ -261,26 +261,38 @@
   // Proses dokumen: panggil endpoint pembersihan lalu tandai sebagai processed
   function onProcess(e){
     const btn = e.currentTarget;
-    const tr = btn.closest('tr');
-    const id = tr?.getAttribute('data-id');
-    if (!id) return;
-
+    const card = btn.closest('.herb-card');
+    const id = card?.getAttribute('data-id');
     const originalHTML = btn.innerHTML;
+    if (!id) {
+      console.warn('[Process][Client] No id found for process button, aborting.');
+      // restore UI just in case
+      btn.disabled = false;
+      btn.innerHTML = originalHTML;
+      feather.replace({ elements: [btn] });
+      return;
+    }
+
+    console.log('[Process][Client] start processing id=', id);
     btn.disabled = true;
     btn.innerHTML = '<i data-feather="loader"></i><span>Memproses...</span>';
     feather.replace({ elements: [btn] });
 
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 60000);
+    const timeout = setTimeout(() => controller.abort(), 120000);
 
-  fetch(`/api/documents/${id}/process`, { method: 'POST', signal: controller.signal })
+    fetch(`/api/documents/${id}/process`, { method: 'POST', signal: controller.signal })
       .then(async res => {
         clearTimeout(timeout);
-        if (!res.ok) throw new Error('HTTP '+res.status);
+        if (!res.ok) {
+          const txt = await res.text().catch(()=>null);
+          console.error('[Process][Client] process endpoint returned', res.status, txt);
+          throw new Error('HTTP '+res.status);
+        }
         return res.json();
       })
       .then(data => {
-    console.log('[Process][Client] metadata:', data?.metadata, 'chunks:', data?.chunk_count, 'length:', data?.length);
+        console.log('[Process][Client] process response metadata:', data?.metadata, 'chunks:', data?.chunk_count, 'length:', data?.length, 'inserted:', data?.inserted_count);
         // Tandai processed di DB
         return fetch(`/api/documents/${id}`, {
           method: 'PATCH',
@@ -289,7 +301,11 @@
         });
       })
       .then(async res => {
-        if (!res.ok) throw new Error('PATCH HTTP '+res.status);
+        if (!res.ok) {
+          const t = await res.text().catch(()=>null);
+          console.error('[Process][Client] patch returned', res.status, t);
+          throw new Error('PATCH HTTP '+res.status);
+        }
         return res.json();
       })
       .then(() => {
@@ -304,6 +320,7 @@
       .catch(err => {
         console.error('Gagal memproses dokumen:', err);
         Swal.fire('Error', 'Gagal memproses dokumen.', 'error');
+        try { clearTimeout(timeout); } catch(_){}
         btn.disabled = false;
         btn.innerHTML = originalHTML;
         feather.replace({ elements: [btn] });

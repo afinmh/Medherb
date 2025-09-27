@@ -163,14 +163,50 @@ export async function POST(request, ctx) {
     if (!doc.file_url) return NextResponse.json({ error: 'File URL tidak tersedia untuk dokumen ini.' }, { status: 400 });
 
     // 2) Unduh PDF
-    const res = await fetch(doc.file_url);
-    if (!res.ok) {
-      return NextResponse.json({ error: `Gagal mengunduh PDF: ${res.status} ${res.statusText}` }, { status: 502 });
+    console.log('[Process] Downloading PDF from', doc.file_url);
+    let res;
+    // Build a safe, properly-encoded URL for fetching. Some stored filenames contain spaces
+    // or already-percent-encoded sequences; decode then re-encode path segments to avoid
+    // double-encoding (which caused InvalidKey errors on Supabase storage).
+    try {
+      const originalUrl = String(doc.file_url || '');
+      let safeUrl = originalUrl;
+      try {
+        const u = new URL(originalUrl);
+        let decodedPathname;
+        try { decodedPathname = decodeURIComponent(u.pathname); } catch (e) { decodedPathname = u.pathname; }
+        const encodedSegments = decodedPathname.split('/').map(seg => encodeURIComponent(seg));
+        // Join and preserve leading slash
+        u.pathname = encodedSegments.join('/');
+        safeUrl = u.toString();
+      } catch (e) {
+        // If URL parsing fails, fallback to encodeURI but avoid double-encoding by decoding first
+        try { safeUrl = encodeURI(decodeURIComponent(originalUrl)); } catch (ee) { safeUrl = encodeURI(originalUrl); }
+      }
+      console.log('[Process] Trying fetch original ->', originalUrl);
+      console.log('[Process] Trying fetch safe ->', safeUrl);
+      res = await fetch(safeUrl);
+    } catch (fetchErr) {
+      console.error('[Process] Fetch error downloading PDF:', fetchErr);
+      return NextResponse.json({ error: 'Gagal mengunduh PDF (network error)', detail: String(fetchErr) }, { status: 502 });
     }
-    const arrayBuffer = await res.arrayBuffer();
+    if (!res.ok) {
+      const bodyText = await res.text().catch(() => null);
+      console.error('[Process] PDF download returned non-ok status', res.status, res.statusText, bodyText);
+      return NextResponse.json({ error: `Gagal mengunduh PDF: ${res.status} ${res.statusText}`, detail: bodyText }, { status: 502 });
+    }
+    let arrayBuffer;
+    try { arrayBuffer = await res.arrayBuffer(); } catch (abErr) { console.error('[Process] Error reading arrayBuffer:', abErr); return NextResponse.json({ error: 'Gagal membaca PDF', detail: String(abErr) }, { status: 502 }); }
 
     // 3) Ekstrak teks dari PDF lalu bersihkan (persis seperti bersih_dokumen.py)
-    const { chunks: pageChunks } = await extractPdfText(arrayBuffer);
+    let pageChunks = [];
+    try {
+      const extracted = await extractPdfText(arrayBuffer);
+      pageChunks = Array.isArray(extracted?.chunks) ? extracted.chunks : (extracted?.text ? [extracted.text] : []);
+    } catch (ex) {
+      console.error('[Process] PDF extraction error:', ex);
+      return NextResponse.json({ error: 'Gagal mengekstrak teks dari PDF', detail: String(ex) }, { status: 500 });
+    }
     const fullText = pageChunks.join('\n');
     const mainSpan = findMainContentSpan(fullText);
     if (!mainSpan) {
@@ -194,18 +230,23 @@ export async function POST(request, ctx) {
     const rows = [];
     for (let i = 0; i < finalChunks.length; i++) {
       const content = finalChunks[i];
-      const out = await embedder(content, { pooling: 'mean', normalize: true });
-      const vector = toVector(out);
-      rows.push({
-        content,
-        metadata: { ...metadata, chunk_index: i, doc_id: doc.id },
-        embedding: vector,
-      });
+      try {
+        const out = await embedder(content, { pooling: 'mean', normalize: true });
+        const vector = toVector(out);
+        rows.push({
+          content,
+          metadata: { ...metadata, chunk_index: i, doc_id: doc.id },
+          embedding: vector,
+        });
+      } catch (embedErr) {
+        console.error('[Process] Embedding failed for chunk', i, embedErr);
+        // continue, do not abort entire processing
+      }
     }
     let inserted = 0;
     if (rows.length) {
       const { error: insErr } = await sb().from('documents').insert(rows);
-      if (insErr) throw new Error('Supabase insert error: ' + insErr.message);
+      if (insErr) { console.error('[Process] Supabase insert error:', insErr); throw new Error('Supabase insert error: ' + insErr.message); }
       inserted = rows.length;
     }
 
@@ -221,7 +262,7 @@ export async function POST(request, ctx) {
     });
   } catch (err) {
     console.error('POST /api/documents/[id]/process error:', err);
-    return NextResponse.json({ error: 'Gagal memproses dokumen.' }, { status: 500 });
+    return NextResponse.json({ error: 'Gagal memproses dokumen.', detail: String(err) }, { status: 500 });
   }
 }
 
