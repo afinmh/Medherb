@@ -1,0 +1,22 @@
+-- ============================================================
+-- Migration 008: Seed Admin User (Opsional)
+-- ============================================================
+-- Jalankan SETELAH Anda membuat akun admin melalui Supabase Auth
+-- atau melalui register pada aplikasi.
+--
+-- PETUNJUK:
+--   1. Buat akun admin melalui Supabase Dashboard → Authentication → Users
+--      atau register melalui aplikasi dengan email: admin@gmail.com
+--   2. Salin UUID dari user tersebut
+--   3. Ganti <ADMIN-USER-UUID> di bawah dengan UUID yang sebenarnya
+--   4. Jalankan SQL ini di Supabase SQL Editor
+-- ============================================================
+
+-- UPDATE public.users
+-- SET role = 'admin'
+-- WHERE id = '<ADMIN-USER-UUID>';
+
+-- Alternatif: update berdasarkan email
+-- UPDATE public.users
+-- SET role = 'admin'
+-- WHERE email = 'admin@gmail.com';
