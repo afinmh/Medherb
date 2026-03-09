@@ -5,7 +5,7 @@ export async function GET(request) {
   try {
     // Get the authorization header
     const authorization = request.headers.get('authorization');
-    
+
     if (!authorization || !authorization.startsWith('Bearer ')) {
       return NextResponse.json(
         { error: "No authorization token provided" },
@@ -17,12 +17,19 @@ export async function GET(request) {
 
     const supabase = createClient(
       process.env.SUPABASE_URL,
-      process.env.SUPABASE_KEY
+      process.env.SUPABASE_KEY,
+      {
+        global: {
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
+        }
+      }
     );
 
     // Get user from token
     const { data: { user }, error: userError } = await supabase.auth.getUser(token);
-    
+
     if (userError || !user) {
       return NextResponse.json(
         { error: "Invalid token" },
@@ -30,7 +37,7 @@ export async function GET(request) {
       );
     }
 
-  // Get user profile with role from users table
+    // Get user profile with role from users table
     const { data: profile, error: profileError } = await supabase
       .from('users')
       .select('id, name, email, role, password_set, is_verified, created_at, avatar_url')
@@ -39,18 +46,21 @@ export async function GET(request) {
 
     if (profileError) {
       // If profile doesn't exist, create one with default 'user' role
-  const provider = user.app_metadata?.provider || 'email';
-  const { data: newProfile, error: createError } = await supabase
+      const provider = user.app_metadata?.provider || 'email';
+      const adminKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_KEY;
+      const supabaseAdmin = createClient(process.env.SUPABASE_URL, adminKey);
+
+      const { data: newProfile, error: createError } = await supabaseAdmin
         .from('users')
         .insert([
           {
             id: user.id,
             name: user.user_metadata?.full_name || user.email.split('@')[0],
             email: user.email,
-    role: 'user', // Default role
-    // If user logged in via Google, they may not have a password yet
-    password_set: provider === 'google' ? false : true,
-    is_verified: true // OAuth/email login implies verified
+            role: 'user', // Default role
+            // If user logged in via Google, they may not have a password yet
+            password_set: provider === 'google' ? false : true,
+            is_verified: true // OAuth/email login implies verified
           }
         ])
         .select()

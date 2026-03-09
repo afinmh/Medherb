@@ -9,8 +9,12 @@ export async function GET(request) {
 
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { 
-      redirectTo: process.env.NEXT_PUBLIC_SITE_URL 
+    options: {
+      queryParams: {
+        access_type: 'offline',
+        prompt: 'select_account'
+      },
+      redirectTo: process.env.NEXT_PUBLIC_SITE_URL
     },
   });
 
